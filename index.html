@@ -471,25 +471,28 @@ body { background: #f0f2f5; min-height: 100vh; padding-bottom: 80px; }
         <div id="lessonsList"></div>
     </div>
 
-    <!-- ===== صفحة الامتحان ===== -->
-    <div class="page" id="page-exam">
-        <button class="back-btn" onclick="navigateTo('lessons')">⬅ العودة للدروس</button>
-        <div class="exam-container">
-            <div class="exam-header">
-                <h2 id="examTitle">📝 الامتحان</h2>
-                <div class="exam-meta">
-                    <span id="examQuestionsCount">10 أسئلة</span>
-                    <div class="timer-box" id="timerBox">
-                        <i class="fas fa-clock"></i>
-                        <span id="timerDisplay">30:00</span>
-                    </div>
+<!-- صفحة الامتحان -->
+<div class="page" id="page-exam">
+    <button class="back-btn" onclick="navigateTo('lessons')">⬅ العودة للدروس</button>
+    <div class="exam-container">
+        <div class="exam-header">
+            <h2 id="examTitle">📝 الامتحان</h2>
+            <div class="exam-meta">
+                <span id="examQuestionsCount">10 أسئلة</span>
+                <span id="examTimeLimit" style="background:#f0f2f5;padding:4px 12px;border-radius:20px;font-size:13px;color:#888;">
+                    ⏱ 20 دقيقة
+                </span>
+                <div class="timer-box" id="timerBox">
+                    <i class="fas fa-clock"></i>
+                    <span id="timerDisplay">20:00</span>
                 </div>
             </div>
-            <div id="questionsContainer"></div>
-            <button class="btn-submit" id="submitBtn" onclick="submitExam()">✅ تسليم الامتحان</button>
-            <div id="resultContainer" class="hidden result-box"></div>
         </div>
+        <div id="questionsContainer"></div>
+        <button class="btn-submit" id="submitBtn" onclick="submitExam()">✅ تسليم الامتحان</button>
+        <div id="resultContainer" class="hidden result-box"></div>
     </div>
+</div>
 
     <!-- ===== صفحة النتائج ===== -->
     <div class="page" id="page-results">
@@ -800,73 +803,69 @@ let examSettings = {
 
 // ==================== بدء الامتحان ====================
 function startExam(lessonId, lessonName, totalQuestions) {
-    // اختيار عدد الأسئلة (لو أقل من 10 يختار الكل)
-    const maxQuestions = Math.min(totalQuestions, 20);
-    const defaultCount = Math.min(10, maxQuestions);
-    
-    const count = prompt(`عدد الأسئلة المتاحة: ${totalQuestions}\nكم سؤال تريد؟ (5-${maxQuestions})`, defaultCount);
-    if (!count) return;
-    
-    const questionCount = parseInt(count);
-    if (isNaN(questionCount) || questionCount < 1 || questionCount > maxQuestions) {
-        alert(`⚠️ أدخل عدداً بين 1 و ${maxQuestions}`);
-        return;
-    }
-    
-    // اختيار وقت الامتحان
-    const timeOptions = [10, 15, 20, 30, 45, 60];
-    const defaultTime = Math.min(30, Math.max(10, questionCount * 2));
-    const timeChoice = prompt(`اختر وقت الامتحان بالدقائق:\n(10, 15, 20, 30, 45, 60)`, defaultTime);
-    if (!timeChoice) return;
-    
-    const timeLimit = parseInt(timeChoice);
-    if (!timeOptions.includes(timeLimit) || timeLimit < 5) {
-        alert('⚠️ اختر وقتاً صحيحاً (10-60 دقيقة)');
-        return;
-    }
-    
-    // حفظ الإعدادات
-    examSettings.questionCount = questionCount;
-    examSettings.timeLimit = timeLimit;
-    
-    currentLessonId = lessonId;
-    currentLessonName = lessonName;
-    isSubmitted = false;
-    userAnswers = {};
-    currentQuestions = [];
-    timeRemaining = timeLimit * 60;
-    
-    navigateTo('exam');
-    document.getElementById('examTitle').textContent = `📝 ${lessonName}`;
-    document.getElementById('examQuestionsCount').textContent = `${questionCount} أسئلة`;
-    document.getElementById('resultContainer').classList.add('hidden');
-    document.getElementById('resultContainer').innerHTML = '';
-    document.getElementById('submitBtn').classList.remove('hidden');
-    document.getElementById('submitBtn').disabled = false;
-    
-    updateTimerDisplay();
-    startTimer();
-    
-    const container = document.getElementById('questionsContainer');
-    container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري تحميل الأسئلة...</p>';
-    
-    db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
-        const questions = snapshot.val();
-        if (!questions) {
-            container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>';
-            document.getElementById('submitBtn').classList.add('hidden');
+    // جلب إعدادات الدرس من قاعدة البيانات
+    db.ref('lessons/' + lessonId).once('value', (snapshot) => {
+        const lesson = snapshot.val();
+        if (!lesson) {
+            alert('⚠️ حدث خطأ في تحميل بيانات الدرس');
             return;
         }
         
-        allQuestions = Object.keys(questions).map(key => ({ id: key, ...questions[key] }));
-        const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-        currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
+        // استخدام إعدادات المشرف
+        const questionCount = parseInt(lesson.defaultQuestions) || 10;
+        const timeLimit = parseInt(lesson.defaultTime) || 20;
         
-        renderQuestions();
-        document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
+        // التأكد من عدم تجاوز عدد الأسئلة المتاحة
+        const actualCount = Math.min(questionCount, totalQuestions);
+        
+        if (actualCount === 0) {
+            alert('⚠️ لا توجد أسئلة كافية لهذا الدرس');
+            return;
+        }
+        
+        // حفظ الإعدادات
+        examSettings.questionCount = actualCount;
+        examSettings.timeLimit = timeLimit;
+        
+        currentLessonId = lessonId;
+        currentLessonName = lessonName;
+        isSubmitted = false;
+        userAnswers = {};
+        currentQuestions = [];
+        timeRemaining = timeLimit * 60;
+        
+        navigateTo('exam');
+        document.getElementById('examTitle').textContent = `📝 ${lessonName}`;
+        document.getElementById('examQuestionsCount').textContent = `${actualCount} أسئلة`;
+        document.getElementById('examTimeLimit').textContent = `${timeLimit} دقيقة`;
+        document.getElementById('resultContainer').classList.add('hidden');
+        document.getElementById('resultContainer').innerHTML = '';
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('submitBtn').disabled = false;
+        
+        updateTimerDisplay();
+        startTimer();
+        
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري تحميل الأسئلة...</p>';
+        
+        db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
+            const questions = snapshot.val();
+            if (!questions) {
+                container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>';
+                document.getElementById('submitBtn').classList.add('hidden');
+                return;
+            }
+            
+            allQuestions = Object.keys(questions).map(key => ({ id: key, ...questions[key] }));
+            const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+            currentQuestions = shuffled.slice(0, Math.min(actualCount, shuffled.length));
+            
+            renderQuestions();
+            document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
+        });
     });
 }
-
 // ==================== المؤقت ====================
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
@@ -975,7 +974,7 @@ function submitExam() {
     const resultContainer = document.getElementById('resultContainer');
     resultContainer.classList.remove('hidden');
     const percentage = Math.round((correct / currentQuestions.length) * 100);
-    const passed = percentage >= 70;
+    const passed = percentage >= 50;
     
     resultContainer.innerHTML = `
         <h2>🎉 تم التسليم!</h2>
