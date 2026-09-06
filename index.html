@@ -699,6 +699,47 @@ function handleRegister(event) {
     });
 }
 
+    function handleLogin(event) {
+    event.preventDefault();
+    
+    const phone = document.getElementById('loginPhone').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    // التحقق من رقم الهاتف
+    if (!validatePhone(phone)) {
+        errorDiv.textContent = '⚠️ رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // البحث عن الطالب
+    db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
+        const students = snapshot.val();
+        
+        if (!students) {
+            errorDiv.textContent = '❌ لا يوجد حساب بهذا الرقم';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        // جلب بيانات الطالب
+        const studentId = Object.keys(students)[0];
+        const studentData = students[studentId];
+        
+        // التحقق من كلمة المرور
+        if (studentData.password === password) {
+            currentStudent = studentData;
+            currentStudentId = studentId;
+            localStorage.setItem('studentSession', JSON.stringify({ id: studentId }));
+            loginSuccess();
+        } else {
+            errorDiv.textContent = '❌ كلمة المرور غير صحيحة';
+            errorDiv.classList.remove('hidden');
+        }
+    });
+    }
+
 function logout() {
     localStorage.removeItem('studentSession');
     currentStudent = null;
