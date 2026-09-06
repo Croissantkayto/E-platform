@@ -581,41 +581,9 @@ function switchTab(tab) {
 
 function validatePhone(phone) { return /^01[0-9]{9}$/.test(phone); }
 
-function handleLogin(event) {
-    event.preventDefault();
-    const phone = document.getElementById('loginPhone').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    
-    if (!validatePhone(phone)) {
-        errorDiv.textContent = '⚠️ رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
-        errorDiv.classList.remove('hidden');
-        return;
-    }
-    
-    db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
-        const students = snapshot.val();
-        if (!students) {
-            errorDiv.textContent = '❌ لا يوجد حساب بهذا الرقم';
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-        const studentId = Object.keys(students)[0];
-        const studentData = students[studentId];
-        if (studentData.password === password) {
-            currentStudent = studentData;
-            currentStudentId = studentId;
-            localStorage.setItem('studentSession', JSON.stringify({ id: studentId }));
-            loginSuccess();
-        } else {
-            errorDiv.textContent = '❌ كلمة المرور غير صحيحة';
-            errorDiv.classList.remove('hidden');
-        }
-    });
-}
-
 function handleRegister(event) {
     event.preventDefault();
+    
     const firstName = document.getElementById('regFirstName').value.trim();
     const fatherName = document.getElementById('regFatherName').value.trim();
     const familyName = document.getElementById('regFamilyName').value.trim();
@@ -628,11 +596,31 @@ function handleRegister(event) {
     const errorDiv = document.getElementById('registerError');
     const successDiv = document.getElementById('registerSuccess');
     
-    if (!firstName || !fatherName || !familyName) {
-        errorDiv.textContent = '⚠️ أدخل الاسم الثلاثي كاملاً';
+    // ===== التحقق من الاسم =====
+    if (!firstName || firstName.length < 2) {
+        errorDiv.textContent = '⚠️ الاسم الأول يجب أن يكون حرفين على الأقل';
         errorDiv.classList.remove('hidden');
         return;
     }
+    if (!fatherName || fatherName.length < 2) {
+        errorDiv.textContent = '⚠️ اسم الأب يجب أن يكون حرفين على الأقل';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    if (!familyName || familyName.length < 2) {
+        errorDiv.textContent = '⚠️ اسم العيلة يجب أن يكون حرفين على الأقل';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // ===== التحقق من عدم تطابق رقم الهاتف مع رقم ولي الأمر =====
+    if (phone === parentPhone) {
+        errorDiv.textContent = '⚠️ رقم هاتف الطالب ورقم ولي الأمر لا يمكن أن يكونا متطابقين';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // ===== التحقق من رقم الهاتف =====
     if (!validatePhone(phone)) {
         errorDiv.textContent = '⚠️ رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
         errorDiv.classList.remove('hidden');
@@ -643,6 +631,8 @@ function handleRegister(event) {
         errorDiv.classList.remove('hidden');
         return;
     }
+    
+    // ===== التحقق من كلمة المرور =====
     if (password.length < 6) {
         errorDiv.textContent = '⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل';
         errorDiv.classList.remove('hidden');
@@ -654,33 +644,57 @@ function handleRegister(event) {
         return;
     }
     
+    // ===== التحقق من عدم وجود الرقم مسجلاً =====
     db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
         if (snapshot.val()) {
             errorDiv.textContent = '⚠️ هذا الرقم مسجل بالفعل';
             errorDiv.classList.remove('hidden');
             return;
         }
-        const fullName = `${firstName} ${fatherName} ${familyName}`;
-        db.ref('students').push({
-            firstName, fatherName, familyName, fullName, phone, parentPhone, grade, gender, password,
-            createdAt: Date.now()
-        }).then(() => {
-            successDiv.textContent = '✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن';
-            successDiv.classList.remove('hidden');
-            errorDiv.classList.add('hidden');
-            document.getElementById('regFirstName').value = '';
-            document.getElementById('regFatherName').value = '';
-            document.getElementById('regFamilyName').value = '';
-            document.getElementById('regPhone').value = '';
-            document.getElementById('regParentPhone').value = '';
-            document.getElementById('regGrade').value = '';
-            document.getElementById('regGender').value = '';
-            document.getElementById('regPassword').value = '';
-            document.getElementById('regConfirmPassword').value = '';
-            setTimeout(() => switchTab('login'), 1500);
-        }).catch((error) => {
-            errorDiv.textContent = '❌ خطأ: ' + error.message;
-            errorDiv.classList.remove('hidden');
+        
+        // ===== التحقق من عدم وجود رقم ولي الأمر مسجلاً كرقم طالب =====
+        db.ref('students').orderByChild('phone').equalTo(parentPhone).once('value', (snapshot) => {
+            if (snapshot.val()) {
+                errorDiv.textContent = '⚠️ رقم ولي الأمر مسجل بالفعل كرقم طالب';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // ===== حفظ البيانات =====
+            const fullName = `${firstName} ${fatherName} ${familyName}`;
+            db.ref('students').push({
+                firstName: firstName,
+                fatherName: fatherName,
+                familyName: familyName,
+                fullName: fullName,
+                phone: phone,
+                parentPhone: parentPhone,
+                grade: grade,
+                gender: gender,
+                password: password,
+                createdAt: Date.now()
+            }).then(() => {
+                successDiv.textContent = '✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن';
+                successDiv.classList.remove('hidden');
+                errorDiv.classList.add('hidden');
+                
+                // تنظيف الحقول
+                document.getElementById('regFirstName').value = '';
+                document.getElementById('regFatherName').value = '';
+                document.getElementById('regFamilyName').value = '';
+                document.getElementById('regPhone').value = '';
+                document.getElementById('regParentPhone').value = '';
+                document.getElementById('regGrade').value = '';
+                document.getElementById('regGender').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+                
+                // التبديل لتبويب تسجيل الدخول بعد 2 ثانية
+                setTimeout(() => switchTab('login'), 2000);
+            }).catch((error) => {
+                errorDiv.textContent = '❌ خطأ في التسجيل: ' + error.message;
+                errorDiv.classList.remove('hidden');
+            });
         });
     });
 }
