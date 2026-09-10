@@ -1073,7 +1073,7 @@ function submitExam() {
     const resultContainer = document.getElementById('resultContainer');
     resultContainer.classList.remove('hidden');
     const percentage = Math.round((correct / currentQuestions.length) * 100);
-    const passed = percentage >= 70;
+    const passed = percentage >= 50;
     
     resultContainer.innerHTML = `
         <h2> تم التسليم!</h2>
