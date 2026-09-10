@@ -562,6 +562,7 @@ const db = firebase.database();
 // ==================== نظام تسجيل الدخول ====================
 let currentStudent = null;
 let currentStudentId = null;
+let currentExamIndex = null;
 
 function checkSession() {
     const saved = localStorage.getItem('studentSession');
@@ -799,7 +800,7 @@ function loginSuccess() {
     navigateTo('lessons');
 }
 
-// ==================== عرض الدروس ====================
+// ==================== عرض الدروس (بالستارة) ====================
 function loadLessons() {
     const container = document.getElementById('lessonsList');
     container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري التحميل...</p>';
@@ -825,27 +826,70 @@ function loadLessons() {
             return;
         }
         
-        container.innerHTML = '';
         const gradeNames = { '1': 'الأول ثانوي', '2': 'الثاني ثانوي', '3': 'الثالث ثانوي' };
+        container.innerHTML = '';
         
         lessonsArray.forEach(lesson => {
-            countQuestions(lesson.id, (count) => {
-                const div = document.createElement('div');
-                div.className = 'lesson-card';
-                div.innerHTML = `
+            const exams = lesson.exams || [];
+            const pdfUrl = lesson.pdfUrl || '';
+            
+            const card = document.createElement('div');
+            card.className = 'lesson-card';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'stretch';
+            card.style.cursor = 'pointer';
+            card.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;" onclick="toggleLessonAccordion('${lesson.id}')">
                     <div class="info">
                         <h3>📖 ${lesson.name}</h3>
                         <p>${lesson.description || 'لا يوجد وصف'}</p>
-                        <div class="meta">📚 ${gradeNames[lesson.grade] || ''} • 📝 ${count} سؤال</div>
+                        <div class="question-count">
+                            📚 ${gradeNames[lesson.grade] || ''} • 
+                            📝 ${exams.length} امتحان
+                            ${pdfUrl ? ' • 📄 ملف PDF' : ''}
+                        </div>
                     </div>
-                    <button class="btn-exam" onclick="startExam('${lesson.id}', '${lesson.name}', ${count})" ${count === 0 ? 'disabled' : ''}>
-                        ${count === 0 ? '🔒 لا توجد أسئلة' : '🧪 دخول الامتحان'}
-                    </button>
-                `;
-                container.appendChild(div);
-            });
+                    <i class="fas fa-chevron-down" id="icon-${lesson.id}" style="font-size:20px;color:#667eea;transition:0.3s;"></i>
+                </div>
+                
+                <div id="accordion-${lesson.id}" style="display:none;margin-top:15px;padding-top:15px;border-top:1px solid #eee;">
+                    ${exams.length > 0 ? `
+                        <h4 style="font-size:14px;color:#666;margin-bottom:8px;">📝 الامتحانات:</h4>
+                        ${exams.map((exam, index) => `
+                            <button class="btn btn-exam" onclick="startExam('${lesson.id}', '${exam.name}', ${index})" style="width:100%;margin-bottom:8px;justify-content:space-between;">
+                                <span>🧪 ${exam.name}</span>
+                                <span style="font-size:12px;opacity:0.8;">⏱ ${exam.timeLimit} دقيقة • ${exam.questionCount} سؤال</span>
+                            </button>
+                        `).join('')}
+                    ` : '<p style="color:#999;font-size:14px;">لا توجد امتحانات بعد</p>'}
+                    
+                    ${pdfUrl ? `
+                        <a href="${pdfUrl}" target="_blank" style="display:block;text-decoration:none;margin-top:10px;">
+                            <button class="btn" style="background:#d32f2f;width:100%;">
+                                <i class="fas fa-file-pdf"></i> تحميل ملف PDF
+                            </button>
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(card);
         });
     });
+}
+
+// ==================== فتح/غلق الستارة ====================
+function toggleLessonAccordion(lessonId) {
+    const accordion = document.getElementById('accordion-' + lessonId);
+    const icon = document.getElementById('icon-' + lessonId);
+    
+    if (accordion.style.display === 'none' || !accordion.style.display) {
+        accordion.style.display = 'block';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        accordion.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
 }
 
 function countQuestions(lessonId, callback) {
@@ -870,7 +914,7 @@ let examSettings = {
 };
 
 // ==================== بدء الامتحان ====================
-function startExam(lessonId, lessonName, totalQuestions) {
+function startExam(lessonId, examName, examIndex) {
     db.ref('lessons/' + lessonId).once('value', (snapshot) => {
         const lesson = snapshot.val();
         if (!lesson) {
@@ -878,28 +922,31 @@ function startExam(lessonId, lessonName, totalQuestions) {
             return;
         }
         
-        const questionCount = parseInt(lesson.defaultQuestions) || 10;
-        const timeLimit = parseInt(lesson.defaultTime) || 20;
-        const actualCount = Math.min(questionCount, totalQuestions);
+        const exams = lesson.exams || [];
+        const exam = exams[examIndex];
         
-        if (actualCount === 0) {
-            alert('⚠️ لا توجد أسئلة كافية لهذا الدرس');
+        if (!exam) {
+            alert('⚠️ الامتحان غير موجود');
             return;
         }
         
-        examSettings.questionCount = actualCount;
+        const questionCount = exam.questionCount || 10;
+        const timeLimit = exam.timeLimit || 20;
+        
+        examSettings.questionCount = questionCount;
         examSettings.timeLimit = timeLimit;
         
         currentLessonId = lessonId;
-        currentLessonName = lessonName;
+        currentLessonName = lesson.name + ' - ' + exam.name;
+        currentExamIndex = examIndex;
         isSubmitted = false;
         userAnswers = {};
         currentQuestions = [];
         timeRemaining = timeLimit * 60;
         
         navigateTo('exam');
-        document.getElementById('examTitle').textContent = `📝 ${lessonName}`;
-        document.getElementById('examQuestionsCount').textContent = `${actualCount} أسئلة`;
+        document.getElementById('examTitle').textContent = `📝 ${exam.name}`;
+        document.getElementById('examQuestionsCount').textContent = `${questionCount} أسئلة`;
         document.getElementById('examTimeLimit').textContent = `${timeLimit} دقيقة`;
         document.getElementById('resultContainer').classList.add('hidden');
         document.getElementById('resultContainer').innerHTML = '';
@@ -912,6 +959,7 @@ function startExam(lessonId, lessonName, totalQuestions) {
         const container = document.getElementById('questionsContainer');
         container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري تحميل الأسئلة...</p>';
         
+        // جلب أسئلة الامتحان المحدد
         db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
             const questions = snapshot.val();
             if (!questions) {
@@ -920,9 +968,18 @@ function startExam(lessonId, lessonName, totalQuestions) {
                 return;
             }
             
-            allQuestions = Object.keys(questions).map(key => ({ id: key, ...questions[key] }));
+            allQuestions = Object.keys(questions)
+                .map(key => ({ id: key, ...questions[key] }))
+                .filter(q => q.examIndex === examIndex);  // ✅ فلترة حسب الامتحان
+            
+            if (allQuestions.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>';
+                document.getElementById('submitBtn').classList.add('hidden');
+                return;
+            }
+            
             const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-            currentQuestions = shuffled.slice(0, Math.min(actualCount, shuffled.length));
+            currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
             
             renderQuestions();
             document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
