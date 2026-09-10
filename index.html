@@ -244,6 +244,19 @@ body { background: #f0f2f5; min-height: 100vh; padding-bottom: 80px; }
     border-radius: 12px;
     border: 1px solid #eee;
 }
+
+        /* الأسئلة النصية */
+.question-text {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 10px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    border-right: 4px solid #667eea;
+    color: #1a1a2e;
+}
+        
 .option-label {
     display: block;
     padding: 10px 14px;
@@ -858,7 +871,6 @@ let examSettings = {
 
 // ==================== بدء الامتحان ====================
 function startExam(lessonId, lessonName, totalQuestions) {
-    // جلب إعدادات الدرس من قاعدة البيانات
     db.ref('lessons/' + lessonId).once('value', (snapshot) => {
         const lesson = snapshot.val();
         if (!lesson) {
@@ -866,11 +878,8 @@ function startExam(lessonId, lessonName, totalQuestions) {
             return;
         }
         
-        // استخدام إعدادات المشرف
         const questionCount = parseInt(lesson.defaultQuestions) || 10;
         const timeLimit = parseInt(lesson.defaultTime) || 20;
-        
-        // التأكد من عدم تجاوز عدد الأسئلة المتاحة
         const actualCount = Math.min(questionCount, totalQuestions);
         
         if (actualCount === 0) {
@@ -878,7 +887,6 @@ function startExam(lessonId, lessonName, totalQuestions) {
             return;
         }
         
-        // حفظ الإعدادات
         examSettings.questionCount = actualCount;
         examSettings.timeLimit = timeLimit;
         
@@ -962,19 +970,52 @@ function renderQuestions() {
         const div = document.createElement('div');
         div.className = 'question-box';
         
-        let optionsHTML = '';
-        options.forEach((letter, optIndex) => {
-            optionsHTML += `
-                <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
-                    <input type="radio" name="q_${q.id}" value="${optIndex}">
-                    <strong>${letter}.</strong>
-                </label>
+        // تحديد إذا كان السؤال نصي أم صورة
+        const isTextQuestion = q.isText || (!q.imageUrl && q.questionText);
+        
+        // محتوى السؤال (نص أو صورة)
+        let questionContent = '';
+        if (isTextQuestion && q.questionText) {
+            // سؤال نصي
+            questionContent = `
+                <div style="background:#f8f9fa;padding:15px;border-radius:12px;margin:10px 0;font-size:16px;line-height:1.6;border-right:4px solid #667eea;">
+                    ${q.questionText}
+                </div>
             `;
-        });
+        } else if (q.imageUrl) {
+            // سؤال صورة
+            questionContent = `
+                <img src="${q.imageUrl}" alt="صورة السؤال" loading="lazy" onerror="this.style.display='none'">
+            `;
+        }
+        
+        // إذا كان السؤال نصي وفيه اختيارات نصية
+        let optionsHTML = '';
+        if (isTextQuestion && q.options && q.options.length === 4) {
+            // اختيارات نصية
+            q.options.forEach((optText, optIndex) => {
+                optionsHTML += `
+                    <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
+                        <input type="radio" name="q_${q.id}" value="${optIndex}">
+                        <strong>${options[optIndex]}.</strong> ${optText}
+                    </label>
+                `;
+            });
+        } else {
+            // اختيارات افتراضية (أ، ب، ج، د)
+            options.forEach((letter, optIndex) => {
+                optionsHTML += `
+                    <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
+                        <input type="radio" name="q_${q.id}" value="${optIndex}">
+                        <strong>${letter}.</strong>
+                    </label>
+                `;
+            });
+        }
         
         div.innerHTML = `
             <div class="q-number">سؤال ${index + 1} من ${currentQuestions.length}</div>
-            ${q.imageUrl ? `<img src="${q.imageUrl}" alt="سؤال" loading="lazy" onerror="this.style.display='none'">` : ''}
+            ${questionContent}
             <div>${optionsHTML}</div>
         `;
         container.appendChild(div);
@@ -1006,7 +1047,6 @@ function submitExam() {
     const answered = Object.keys(userAnswers).length;
     if (answered < currentQuestions.length) {
         if (!confirm(`⚠️ لم تجب على ${currentQuestions.length - answered} سؤال/أسئلة.\nهل تريد التسليم؟`)) {
-            // استئناف المؤقت
             startTimer();
             return;
         }
@@ -1017,22 +1057,26 @@ function submitExam() {
     
     let correct = 0;
     currentQuestions.forEach(q => {
-        if (userAnswers[q.id] === q.correctAnswer) {
+        const correctAnswer = q.correctAnswer;
+        if (userAnswers[q.id] === correctAnswer) {
             correct++;
-            document.getElementById(`opt-${q.id}-${q.correctAnswer}`).classList.add('correct');
+            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
         } else if (userAnswers[q.id] !== undefined) {
             document.getElementById(`opt-${q.id}-${userAnswers[q.id]}`).classList.add('wrong');
-            document.getElementById(`opt-${q.id}-${q.correctAnswer}`).classList.add('correct');
+            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
+        } else {
+            // لو الطالب ماجاوبش، تظهر الإجابة الصحيحة
+            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
         }
     });
     
     const resultContainer = document.getElementById('resultContainer');
     resultContainer.classList.remove('hidden');
     const percentage = Math.round((correct / currentQuestions.length) * 100);
-    const passed = percentage >= 50;
+    const passed = percentage >= 70;
     
     resultContainer.innerHTML = `
-        <h2>🎉 تم التسليم!</h2>
+        <h2> تم التسليم!</h2>
         <div class="score ${passed ? 'pass' : 'fail'}">${correct} / ${currentQuestions.length}</div>
         <div class="percentage">النسبة: ${percentage}%</div>
         <div class="status">${passed ? '✅ ممتاز! أنت ناجح' : '⚠️ تحتاج للمزيد من المراجعة'}</div>
@@ -1041,7 +1085,6 @@ function submitExam() {
     document.getElementById('submitBtn').classList.add('hidden');
     saveResult(correct, percentage);
 }
-
 // ==================== حفظ النتيجة ====================
 async function saveResult(score, percentage) {
     try {
