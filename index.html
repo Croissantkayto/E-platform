@@ -858,8 +858,11 @@ function loadLessons() {
                         ${exams.map((exam, index) => `
                             <button class="btn btn-exam" onclick="startExam('${lesson.id}', '${exam.name}', ${index})" style="width:100%;margin-bottom:8px;justify-content:space-between;">
                                 <span>🧪 ${exam.name}</span>
-                                <span style="font-size:12px;opacity:0.8;">⏱ ${exam.timeLimit} دقيقة • ${exam.questionCount} سؤال</span>
-                            </button>
+                                <span style="font-size:12px;opacity:0.8;">
+    ⏱ ${exam.timeLimit} دقيقة • 
+    📝 ${exam.questionCount === 'all' ? 'كل الأسئلة' : exam.questionCount + ' سؤال'}
+</span>
+</button>
                         `).join('')}
                     ` : '<p style="color:#999;font-size:14px;">لا توجد امتحانات بعد</p>'}
                     
@@ -930,11 +933,12 @@ function startExam(lessonId, examName, examIndex) {
             return;
         }
         
-        const questionCount = exam.questionCount || 10;
-        const timeLimit = exam.timeLimit || 20;
-        
-        examSettings.questionCount = questionCount;
-        examSettings.timeLimit = timeLimit;
+        // لو "كل الأسئلة" → استخدم كل الأسئلة المتاحة
+let questionCount = exam.questionCount === 'all' ? 'all' : (exam.questionCount || 10);
+const timeLimit = exam.timeLimit || 20;
+
+examSettings.questionCount = questionCount;
+examSettings.timeLimit = timeLimit;
         
         currentLessonId = lessonId;
         currentLessonName = lesson.name + ' - ' + exam.name;
@@ -946,7 +950,8 @@ function startExam(lessonId, examName, examIndex) {
         
         navigateTo('exam');
         document.getElementById('examTitle').textContent = `📝 ${exam.name}`;
-        document.getElementById('examQuestionsCount').textContent = `${questionCount} أسئلة`;
+        document.getElementById('examQuestionsCount').textContent = 
+    questionCount === 'all' ? `${currentQuestions.length} سؤال` : `${questionCount} أسئلة`;
         document.getElementById('examTimeLimit').textContent = `${timeLimit} دقيقة`;
         document.getElementById('resultContainer').classList.add('hidden');
         document.getElementById('resultContainer').innerHTML = '';
@@ -978,8 +983,13 @@ function startExam(lessonId, examName, examIndex) {
                 return;
             }
             
-            const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-            currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
+            // لو "كل الأسئلة" → خد كل الأسئلة، وإلا خد العدد المحدد
+const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+if (questionCount === 'all') {
+    currentQuestions = shuffled;
+} else {
+    currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
+}
             
             renderQuestions();
             document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
