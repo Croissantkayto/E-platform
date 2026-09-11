@@ -659,24 +659,28 @@ function handleRegister(event) {
     }
     
     // ===== التحقق من عدم وجود الرقم مسجلاً =====
-    db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
-        if (snapshot.val()) {
-            errorDiv.textContent = '⚠️ هذا الرقم مسجل بالفعل';
+db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
+    if (snapshot.val()) {
+        errorDiv.innerHTML = `
+            ⚠️ <strong>هذا الرقم مسجل بالفعل!</strong><br>
+            <button onclick="switchTab('login')" style="margin-top:8px;padding:6px 14px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+                🚪 الذهاب لتسجيل الدخول
+            </button>
+        `;
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // ===== التحقق من عدم وجود رقم ولي الأمر مسجلاً كرقم طالب =====
+    db.ref('students').orderByChild('phone').equalTo(parentPhone).once('value', (parentSnapshot) => {
+        if (parentSnapshot.val()) {
+            errorDiv.innerHTML = `
+                ⚠️ <strong>رقم ولي الأمر ده مسجل بالفعل كرقم طالب!</strong><br>
+                <span style="font-size:13px;">لو ده حسابك، روح لصفحة تسجيل الدخول</span>
+            `;
             errorDiv.classList.remove('hidden');
             return;
         }
-        
-        // ===== التحقق من عدم وجود رقم ولي الأمر مسجلاً كرقم طالب =====
-        if (snapshot.val()) {
-    errorDiv.innerHTML = `
-        ⚠️ <strong>هذا الرقم مسجل بالفعل!</strong><br>
-        <button onclick="switchTab('login')" style="margin-top:8px;padding:6px 14px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
-            🚪 الذهاب لتسجيل الدخول
-        </button>
-    `;
-    errorDiv.classList.remove('hidden');
-    return;
-}
             
             // ===== حفظ البيانات =====
             const fullName = `${firstName} ${fatherName} ${familyName}`;
@@ -955,7 +959,7 @@ examSettings.timeLimit = timeLimit;
         navigateTo('exam');
         document.getElementById('examTitle').textContent = `📝 ${exam.name}`;
         document.getElementById('examQuestionsCount').textContent = 
-    questionCount === 'all' ? `${currentQuestions.length} سؤال` : `${questionCount} أسئلة`;
+    questionCount === 'all' ? `كل الأسئلة` : `${questionCount} أسئلة`;
         document.getElementById('examTimeLimit').textContent = `${timeLimit} دقيقة`;
         document.getElementById('resultContainer').classList.add('hidden');
         document.getElementById('resultContainer').innerHTML = '';
@@ -970,34 +974,34 @@ examSettings.timeLimit = timeLimit;
         
         // جلب أسئلة الامتحان المحدد
         db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
-            const questions = snapshot.val();
-            if (!questions) {
-                container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>';
-                document.getElementById('submitBtn').classList.add('hidden');
-                return;
-            }
-            
-            allQuestions = Object.keys(questions)
-                .map(key => ({ id: key, ...questions[key] }))
-                .filter(q => q.examIndex === examIndex);  // ✅ فلترة حسب الامتحان
-            
-            if (allQuestions.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>';
-                document.getElementById('submitBtn').classList.add('hidden');
-                return;
-            }
-            
-            // لو "كل الأسئلة" → خد كل الأسئلة، وإلا خد العدد المحدد
-const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-if (questionCount === 'all') {
-    currentQuestions = shuffled;
-} else {
-    currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
-}
-            
-            renderQuestions();
-            document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
-        });
+    const questions = snapshot.val();
+    if (!questions) {
+        container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>';
+        document.getElementById('submitBtn').classList.add('hidden');
+        return;
+    }
+    
+    allQuestions = Object.keys(questions)
+        .map(key => ({ id: key, ...questions[key] }))
+        .filter(q => q.examIndex === examIndex);
+    
+    if (allQuestions.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>';
+        document.getElementById('submitBtn').classList.add('hidden');
+        return;
+    }
+    
+    // لو "كل الأسئلة" → خد كل الأسئلة، وإلا خد العدد المحدد
+    const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+    if (questionCount === 'all') {
+        currentQuestions = shuffled;
+    } else {
+        currentQuestions = shuffled.slice(0, Math.min(questionCount, shuffled.length));
+    }
+    
+    renderQuestions();
+    document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
+});
     });
 }
 // ==================== المؤقت ====================
