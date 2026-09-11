@@ -667,12 +667,16 @@ function handleRegister(event) {
         }
         
         // ===== التحقق من عدم وجود رقم ولي الأمر مسجلاً كرقم طالب =====
-        db.ref('students').orderByChild('phone').equalTo(parentPhone).once('value', (snapshot) => {
-            if (snapshot.val()) {
-                errorDiv.textContent = '⚠️ رقم ولي الأمر مسجل بالفعل كرقم طالب';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
+        if (snapshot.val()) {
+    errorDiv.innerHTML = `
+        ⚠️ <strong>هذا الرقم مسجل بالفعل!</strong><br>
+        <button onclick="switchTab('login')" style="margin-top:8px;padding:6px 14px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+            🚪 الذهاب لتسجيل الدخول
+        </button>
+    `;
+    errorDiv.classList.remove('hidden');
+    return;
+}
             
             // ===== حفظ البيانات =====
             const fullName = `${firstName} ${fatherName} ${familyName}`;
