@@ -139,6 +139,19 @@ body { background: #f0f2f5; min-height: 100vh; padding-bottom: 80px; }
     margin-top: 15px;
     font-weight: 600;
 }
+        /* أزرار الامتحانات */
+.btn-exam {
+    background: #667eea;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+.btn-exam:hover { background: #5a67d8; transform: scale(1.01); }
 .login-box .btn:hover { background: #5a67d8; }
 .login-box .form-row { display: flex; gap: 10px; }
 .login-box .form-row .form-group { flex: 1; }
@@ -839,7 +852,7 @@ function loadLessons() {
         
         lessonsArray.forEach(lesson => {
             const exams = lesson.exams || [];
-            const pdfUrl = lesson.pdfUrl || '';
+            const contents = lesson.contents || [];
             
             const card = document.createElement('div');
             card.className = 'lesson-card';
@@ -851,42 +864,90 @@ function loadLessons() {
                     <div class="info">
                         <h3>📖 ${lesson.name}</h3>
                         <p>${lesson.description || 'لا يوجد وصف'}</p>
-                        <div class="question-count">
+                        <div class="meta" style="color:#aaa;font-size:12px;margin-top:4px;">
                             📚 ${gradeNames[lesson.grade] || ''} • 
-                            📝 ${exams.length} امتحان
-                            ${pdfUrl ? ' • 📄 ملف PDF' : ''}
+                            📝 ${exams.length} امتحان • 
+                            📎 ${contents.length} محتوى
                         </div>
                     </div>
                     <i class="fas fa-chevron-down" id="icon-${lesson.id}" style="font-size:20px;color:#667eea;transition:0.3s;"></i>
                 </div>
                 
                 <div id="accordion-${lesson.id}" style="display:none;margin-top:15px;padding-top:15px;border-top:1px solid #eee;">
+                    ${contents.length > 0 ? `
+                        <h4 style="font-size:14px;color:#666;margin-bottom:8px;">
+                            <i class="fas fa-folder-open" style="color:#ff9800;"></i> محتوى الدرس:
+                        </h4>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:15px;">
+                            ${contents.map(c => {
+                                if (c.type === 'pdf') {
+                                    return `<a href="${c.url}" target="_blank" style="text-decoration:none;">
+                                        <div style="background:#ffebee;padding:12px;border-radius:10px;text-align:center;cursor:pointer;transition:0.3s;border:2px solid #ffcdd2;">
+                                            <i class="fas fa-file-pdf" style="font-size:28px;color:#d32f2f;display:block;margin-bottom:5px;"></i>
+                                            <div style="font-size:12px;color:#333;font-weight:600;">${c.title || 'PDF'}</div>
+                                        </div>
+                                    </a>`;
+                                } else if (c.type === 'image') {
+                                    return `<div style="background:#e3f2fd;padding:8px;border-radius:10px;text-align:center;cursor:pointer;border:2px solid #bbdefb;" onclick="openImage('${c.url}', '${(c.title || '').replace(/'/g, '')}')">
+                                        <img src="${c.url}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">
+                                        <div style="font-size:11px;color:#1565c0;font-weight:600;margin-top:4px;">${c.title || 'صورة'}</div>
+                                    </div>`;
+                                } else if (c.type === 'video') {
+                                    return `<a href="${c.url}" target="_blank" style="text-decoration:none;">
+                                        <div style="background:#f3e5f5;padding:12px;border-radius:10px;text-align:center;cursor:pointer;border:2px solid #e1bee7;">
+                                            <i class="fas fa-video" style="font-size:28px;color:#6a1b9a;display:block;margin-bottom:5px;"></i>
+                                            <div style="font-size:12px;color:#333;font-weight:600;">${c.title || 'فيديو'}</div>
+                                        </div>
+                                    </a>`;
+                                } else {
+                                    return `<a href="${c.url}" target="_blank" style="text-decoration:none;">
+                                        <div style="background:#e8f5e9;padding:12px;border-radius:10px;text-align:center;cursor:pointer;border:2px solid #c8e6c9;">
+                                            <i class="fas fa-link" style="font-size:28px;color:#2e7d32;display:block;margin-bottom:5px;"></i>
+                                            <div style="font-size:12px;color:#333;font-weight:600;">${c.title || 'رابط'}</div>
+                                        </div>
+                                    </a>`;
+                                }
+                            }).join('')}
+                        </div>
+                    ` : ''}
+                    
                     ${exams.length > 0 ? `
                         <h4 style="font-size:14px;color:#666;margin-bottom:8px;">📝 الامتحانات:</h4>
                         ${exams.map((exam, index) => `
-                            <button class="btn btn-exam" onclick="startExam('${lesson.id}', '${exam.name}', ${index})" style="width:100%;margin-bottom:8px;justify-content:space-between;">
+                            <button class="btn btn-exam" onclick="startExam('${lesson.id}', '${exam.name}', ${index})" style="width:100%;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
                                 <span>🧪 ${exam.name}</span>
                                 <span style="font-size:12px;opacity:0.8;">
-    ⏱ ${exam.timeLimit} دقيقة • 
-    📝 ${exam.questionCount === 'all' ? 'كل الأسئلة' : exam.questionCount + ' سؤال'}
-</span>
-</button>
-                        `).join('')}
-                    ` : '<p style="color:#999;font-size:14px;">لا توجد امتحانات بعد</p>'}
-                    
-                    ${pdfUrl ? `
-                        <a href="${pdfUrl}" target="_blank" style="display:block;text-decoration:none;margin-top:10px;">
-                            <button class="btn" style="background:#d32f2f;width:100%;">
-                                <i class="fas fa-file-pdf"></i> تحميل ملف PDF
+                                    ⏱ ${exam.timeLimit} دقيقة • 
+                                    📝 ${exam.questionCount === 'all' ? 'كل الأسئلة' : exam.questionCount + ' سؤال'}
+                                </span>
                             </button>
-                        </a>
-                    ` : ''}
+                        `).join('')}
+                    ` : '<p style="color:#999;font-size:14px;text-align:center;">لا توجد امتحانات بعد</p>'}
                 </div>
             `;
             container.appendChild(card);
         });
     });
 }
+
+// ==================== فتح الصورة ====================
+function openImage(url, title) {
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <meta charset="UTF-8">
+            <title>${title || 'صورة'}</title>
+            <style>
+                body { margin: 0; background: #1a1a2e; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                img { max-width: 95%; max-height: 95vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+            </style>
+        </head>
+        <body><img src="${url}" alt="${title}"></body>
+        </html>
+    `);
+    }
 
 // ==================== فتح/غلق الستارة ====================
 function toggleLessonAccordion(lessonId) {
