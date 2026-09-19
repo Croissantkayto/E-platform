@@ -1232,6 +1232,7 @@ async function saveResult(score, percentage) {
             studentGrade: currentStudent ? currentStudent.grade : '',
             lessonId: currentLessonId,
             lessonName: currentLessonName,
+            examIndex: currentExamIndex,          // ✅ ضيف السطر ده
             score: score,
             totalQuestions: currentQuestions.length,
             percentage: percentage,
