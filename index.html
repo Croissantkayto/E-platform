@@ -1232,8 +1232,7 @@ function loadStudentResults() {
 // ==================== الملف الشخصي ====================
 function loadProfile() {
     if (!currentStudent) return;
-    const gradeNames = { '1': 'الأول الثانوي', '2': 'الثاني الثانوي', '3': 'الثالث الثانوي' };
-    
+    const gradeNames = { '5': 'الثاني الإعدادي', '1': 'الأول ثانوي', '2': 'الثاني ثانوي', '3': 'الثالث ثانوي' };
     document.getElementById('profileName').textContent = currentStudent.fullName || currentStudent.firstName || '-';
     document.getElementById('profilePhone').textContent = currentStudent.phone || '-';
     document.getElementById('profileGrade').textContent = gradeNames[currentStudent.grade] || '-';
