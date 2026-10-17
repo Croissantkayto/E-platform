@@ -1054,6 +1054,7 @@ function renderQuestions() {
         
         const isTextQuestion = q.isText || (!q.imageUrl && q.questionText);
         
+        // محتوى السؤال (نص أو صورة)
         let questionContent = '';
         if (isTextQuestion && q.questionText) {
             questionContent = `
@@ -1066,7 +1067,22 @@ function renderQuestions() {
         }
         
         let optionsHTML = '';
-        if (isTextQuestion && q.options && q.options.length === 4) {
+        
+        // ✅ 1. لو السؤال صح وخطأ
+        if (q.isTrueFalse) {
+            optionsHTML = `
+                <label class="option-label" id="opt-${q.id}-true" onclick="selectOption('${q.id}', true)">
+                    <input type="radio" name="q_${q.id}" value="true">
+                    <strong>أ.</strong> صح
+                </label>
+                <label class="option-label" id="opt-${q.id}-false" onclick="selectOption('${q.id}', false)">
+                    <input type="radio" name="q_${q.id}" value="false">
+                    <strong>ب.</strong> خطأ
+                </label>
+            `;
+        } 
+        // ✅ 2. لو السؤال نصي وعنده اختيارات (عادي)
+        else if (isTextQuestion && q.options && q.options.length === 4) {
             q.options.forEach((optText, optIndex) => {
                 optionsHTML += `
                     <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
@@ -1075,7 +1091,9 @@ function renderQuestions() {
                     </label>
                 `;
             });
-        } else {
+        } 
+        // ✅ 3. لو السؤال صورة (اختيارات افتراضية أ، ب، ج، د)
+        else {
             options.forEach((letter, optIndex) => {
                 optionsHTML += `
                     <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
@@ -1100,21 +1118,37 @@ function selectOption(questionId, optionIndex) {
     if (isSubmitted) return;
     userAnswers[questionId] = optionIndex;
     
-    document.querySelectorAll(`[id^="opt-${questionId}-"]`).forEach((label, index) => {
-        label.classList.remove('selected');
-        if (index === optionIndex) {
-            label.classList.add('selected');
-            label.querySelector('input[type="radio"]').checked = true;
-        } else {
+    // لو السؤال صح/خطأ (الاختيار true أو false)
+    if (typeof optionIndex === 'boolean') {
+        document.querySelectorAll(`[id^="opt-${questionId}-"]`).forEach(label => {
+            label.classList.remove('selected');
             label.querySelector('input[type="radio"]').checked = false;
+        });
+        const selectedLabel = document.getElementById(`opt-${questionId}-${optionIndex}`);
+        if (selectedLabel) {
+            selectedLabel.classList.add('selected');
+            selectedLabel.querySelector('input[type="radio"]').checked = true;
         }
-    });
+    } 
+    // للأسئلة العادية (index 0, 1, 2, 3)
+    else {
+        document.querySelectorAll(`[id^="opt-${questionId}-"]`).forEach((label, index) => {
+            label.classList.remove('selected');
+            if (index === optionIndex) {
+                label.classList.add('selected');
+                label.querySelector('input[type="radio"]').checked = true;
+            } else {
+                label.querySelector('input[type="radio"]').checked = false;
+            }
+        });
+    }
     
     const answered = Object.keys(userAnswers).length;
     document.getElementById('progressText').textContent = `${answered} / ${currentQuestions.length}`;
 }
 
 // ==================== تسليم الامتحان ====================
+function submitExam() {
 function submitExam() {
     if (isSubmitted) return;
     if (timerInterval) clearInterval(timerInterval);
@@ -1132,15 +1166,28 @@ function submitExam() {
     
     let correct = 0;
     currentQuestions.forEach(q => {
-        const correctAnswer = parseInt(q.correctAnswer);
+        // ✅ هنا بنحدد شكل الإجابة الصح: لو صح/خطأ يبقى true/false، لو عادي يبقى رقم
+        const correctAnswer = q.isTrueFalse 
+            ? (q.correctAnswer === true || q.correctAnswer === 'true') 
+            : parseInt(q.correctAnswer);
+        
+        // لو الطالب جاوب صح
         if (userAnswers[q.id] === correctAnswer) {
             correct++;
-            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
-        } else if (userAnswers[q.id] !== undefined) {
-            document.getElementById(`opt-${q.id}-${userAnswers[q.id]}`).classList.add('wrong');
-            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
-        } else {
-            document.getElementById(`opt-${q.id}-${correctAnswer}`).classList.add('correct');
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (correctOpt) correctOpt.classList.add('correct');
+        } 
+        // لو الطالب جاوب غلط
+        else if (userAnswers[q.id] !== undefined) {
+            const wrongOpt = document.getElementById(`opt-${q.id}-${userAnswers[q.id]}`);
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (wrongOpt) wrongOpt.classList.add('wrong');
+            if (correctOpt) correctOpt.classList.add('correct');
+        } 
+        // لو الطالب مجاوبش
+        else {
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (correctOpt) correctOpt.classList.add('correct');
         }
     });
     
