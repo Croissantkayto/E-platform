@@ -10,159 +10,147 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        /* --- نظام الألوان الجديد (أزرق احترافي) --- */
+        /* --- الألوان الجديدة زي بستطهالك --- */
         :root {
-            --primary: #0d6efd;
-            --primary-hover: #0b5ed7;
-            --secondary: #e7f1ff;
-            --text-dark: #212529;
-            --text-light: #6c757d;
-            --bg-color: #f8f9fa;
+            --primary-dark: #1e3a8a;    /* أزرق غامق جداً */
+            --primary-light: #3b82f6;   /* أزرق فاتح للزرار */
+            --accent-green: #10b981;    /* أخضر للنجاح والملفات */
+            --accent-green-light: #ecfdf5; /* أخضر فاتح جداً لخلفية الستائر */
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-color: #f3f4f6;
             --white: #ffffff;
-            --success: #198754;
-            --danger: #dc3545;
-            --border-color: #dee2e6;
+            --danger: #ef4444;
+            --border-color: #e5e7eb;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
-        body { background: var(--bg-color); color: var(--text-dark); min-height: 100vh; padding-bottom: 80px; }
+        body { background: var(--bg-color); color: var(--text-dark); min-height: 100vh; padding-bottom: 80px; font-weight: 500; }
         .container { max-width: 800px; margin: 0 auto; padding: 0 16px; }
 
-        /* شريط علوي */
+        /* شريط علوي (أزرق غامق) */
         .top-bar {
-            background: var(--white);
+            background: var(--primary-dark);
+            color: white;
             padding: 12px 16px;
             border-radius: 0 0 20px 20px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-bottom: 3px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
         }
         .top-bar-content { display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; }
         .top-bar .brand { display: flex; align-items: center; gap: 10px; }
-        .top-bar .brand .logo { font-size: 20px; background: var(--secondary); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary); }
-        .top-bar .brand h1 { font-size: 16px; font-weight: 700; color: var(--text-dark); }
-        .top-bar .brand .subtitle { font-size: 10px; color: var(--text-light); }
-        .top-bar .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .top-bar .brand .logo { font-size: 20px; background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .top-bar .brand h1 { font-size: 18px; font-weight: 800; color: white; }
+        .top-bar .brand .subtitle { font-size: 11px; color: rgba(255,255,255,0.8); }
+        .top-bar .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: white; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; cursor: pointer; }
 
         /* شريط سفلي */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200; border-top: 1px solid var(--border-color); }
-        .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer; color: var(--text-light); font-size: 11px; transition: 0.3s; font-weight: 600; padding: 4px 16px; }
+        .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer; color: var(--text-light); font-size: 11px; transition: 0.3s; font-weight: 700; padding: 4px 16px; }
         .bottom-nav .nav-item i { font-size: 20px; }
-        .bottom-nav .nav-item.active { color: var(--primary); }
+        .bottom-nav .nav-item.active { color: var(--primary-dark); }
 
         /* صفحات */
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* بطاقات الدروس */
-        .hero-section { background: linear-gradient(135deg, var(--primary), #3d8bfd); color: white; padding: 30px 20px; border-radius: 16px; margin: 16px 0; text-align: center; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); }
-        .hero-section h2 { font-size: 22px; margin-bottom: 5px; }
+        /* بطاقات الدروس (المحاضرات) */
+        .hero-section { background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)); color: white; padding: 30px 20px; border-radius: 16px; margin: 16px 0; text-align: center; box-shadow: 0 4px 15px rgba(30, 58, 138, 0.2); }
+        .hero-section h2 { font-size: 22px; margin-bottom: 5px; font-weight: 800; }
         .hero-section p { font-size: 14px; opacity: 0.9; }
 
-        /* تصميم الستارة (المحاضرات) */
-        .lecture-box { background: var(--white); border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); overflow: hidden; }
-        .lecture-header { padding: 16px; background: #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: 0.2s; }
-        .lecture-header:hover { background: #e2e8f0; }
-        .lecture-header h3 { font-size: 16px; color: var(--text-dark); display: flex; align-items: center; gap: 10px; margin: 0; }
-        .lecture-header h3 i { color: var(--primary); }
-        .lecture-content { display: none; padding: 16px; background: var(--white); }
+        /* تصميم الستارة المتداخلة */
+        .lecture-box { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
         
-        /* عناصر داخل المحاضرة */
-        .lecture-section { margin-bottom: 20px; }
-        .lecture-section-title { font-size: 14px; color: var(--text-light); margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
-        
-        /* المحتوى (PDF/صور/فيديو) */
-        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
-        .content-item-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; text-align: center; text-decoration: none; color: var(--text-dark); transition: 0.2s; }
-        .content-item-card:hover { background: var(--secondary); border-color: var(--primary); }
-        .content-item-card i { font-size: 24px; display: block; margin-bottom: 5px; }
-        .content-item-card span { font-size: 11px; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .content-pdf i { color: var(--danger); }
-        .content-image i { color: var(--primary); }
-        .content-video i { color: #6f42c1; }
-        .content-link i { color: var(--success); }
+        /* الستارة الرئيسية (المحاضرة) */
+        .lecture-header { background: var(--primary-dark); color: white; padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .lecture-header:hover { background: #172b6d; }
+        .lecture-header h3 { font-size: 17px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .lecture-content { display: none; background: var(--white); padding: 16px; }
 
-        /* أزرار الامتحانات */
-        .exam-btn { background: var(--white); color: var(--primary); border: 1px solid var(--primary); padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; }
-        .exam-btn:hover { background: var(--primary); color: white; }
+        /* الستائر الفرعية (الشرح، التطبيق...) */
+        .sub-accordion { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .sub-accordion-header { background: var(--accent-green-light); color: var(--text-dark); padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 15px; }
+        .sub-accordion-header i { color: var(--primary-dark); }
+        .sub-accordion-content { display: none; padding: 12px; background: var(--white); }
+
+        /* الأزرار جوة الستائر (ملفات وفيديوهات) */
+        .btn-file { display: flex; justify-content: space-between; align-items: center; background: #14b8a6; color: white; padding: 10px 14px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; margin-bottom: 8px; border: none; width: 100%; cursor: pointer; transition: 0.2s; }
+        .btn-file:hover { background: #0f766e; }
+        .btn-video { background: #0ea5e9; }
+        .btn-video:hover { background: #0284c7; }
+        .btn-exam { background: var(--primary-light); color: white; }
+        .btn-exam:hover { background: var(--primary-dark); }
 
         /* صفحة الامتحان */
-        .exam-container { background: var(--white); padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin: 16px 0; border: 1px solid var(--border-color); }
+        .exam-container { background: var(--white); padding: 24px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin: 16px 0; border: 1px solid var(--border-color); }
         .exam-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
-        .exam-header h2 { font-size: 18px; color: var(--text-dark); }
-        .timer-box { background: var(--text-dark); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .exam-header h2 { font-size: 20px; color: var(--primary-dark); font-weight: 800; }
+        .timer-box { background: var(--primary-dark); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         
         .question-box { border-bottom: 1px solid var(--border-color); padding: 20px 0; }
         .question-box:last-child { border-bottom: none; }
-        .q-number { color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
-        .question-box img { max-width: 100%; max-height: 200px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border-color); }
+        .q-number { color: var(--primary-dark); font-weight: 800; font-size: 15px; margin-bottom: 10px; }
+        .review-question-text { background: var(--bg-color); padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 16px; font-weight: 600; border-right: 4px solid var(--primary-dark); line-height: 1.6; }
         
-        .option-label { display: block; padding: 12px 16px; margin: 8px 0; background: var(--white); border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: 0.2s; font-size: 15px; }
-        .option-label:hover { background: var(--bg-color); }
-        .option-label input[type="radio"] { margin-left: 10px; }
-        .option-label.selected { background: var(--secondary); border-color: var(--primary); }
-        .option-label.correct { background: #d1e7dd; border-color: var(--success); color: #0f5132; font-weight: bold; }
-        .option-label.wrong { background: #f8d7da; border-color: var(--danger); color: #842029; }
+        .option-label { display: block; padding: 14px 16px; margin: 8px 0; background: var(--white); border-radius: 8px; cursor: pointer; border: 2px solid var(--border-color); transition: 0.2s; font-size: 16px; font-weight: 600; }
+        .option-label:hover { background: #f8fafc; }
+        .option-label input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
+        .option-label.selected { background: #eff6ff; border-color: var(--primary-light); }
+        .option-label.correct { background: #dcfce7; border-color: #22c55e; color: #166534; font-weight: 700; }
+        .option-label.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
 
-        .btn-submit { background: var(--success); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.2s; }
-        .btn-submit:hover { background: #157347; }
-        
+        .btn-submit { background: var(--accent-green); color: white; padding: 16px; border: none; border-radius: 8px; font-size: 18px; font-weight: 800; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.2s; }
+        .btn-submit:hover { background: #059669; }
+
         /* صفحة النتائج */
         .result-item { background: var(--white); padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
-        .result-item .lesson-name { font-weight: 700; color: var(--text-dark); font-size: 15px; display: block; }
-        .result-item .date-text { color: var(--text-light); font-size: 12px; margin-top: 4px; display: block; }
-        .result-item .score-badge { background: var(--secondary); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
-        .btn-review { background: var(--white); color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-right: 10px; }
-        .btn-review:hover { background: var(--primary); color: white; }
+        .result-item .lesson-name { font-weight: 800; color: var(--text-dark); font-size: 16px; display: block; }
+        .result-item .date-text { color: var(--text-light); font-size: 13px; margin-top: 4px; display: block; font-weight: 600; }
+        .result-item .score-badge { background: #eff6ff; color: var(--primary-dark); padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 15px; }
+        .btn-review { background: var(--white); color: var(--primary-dark); border: 2px solid var(--primary-dark); padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-right: 10px; }
+        .btn-review:hover { background: var(--primary-dark); color: white; }
 
         /* الملف الشخصي */
         .profile-card { background: var(--white); padding: 24px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin: 16px 0; border: 1px solid var(--border-color); }
-        .profile-card .avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 15px; }
-        .profile-card .field { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .profile-card .avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--primary-dark); color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin: 0 auto 15px; }
+        .profile-card .field { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border-color); }
         .profile-card .field:last-child { border-bottom: none; }
-        .profile-card .field .label { color: var(--text-light); font-weight: 500; }
-        .profile-card .field .value { font-weight: 700; color: var(--text-dark); }
+        .profile-card .field .label { color: var(--text-light); font-weight: 600; font-size: 15px; }
+        .profile-card .field .value { font-weight: 800; color: var(--text-dark); font-size: 15px; }
 
         /* أزرار عامة */
-        .btn-primary { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; width: 100%; font-weight: 700; transition: 0.2s; }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
-        .btn-outline:hover { background: var(--secondary); }
+        .btn-primary { background: var(--primary-dark); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; font-weight: 800; transition: 0.2s; }
+        .btn-primary:hover { background: #172b6d; }
 
         /* تسجيل الدخول */
         .login-box { max-width: 420px; margin: 40px auto; background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
-        .login-box h2 { text-align: center; color: var(--text-dark); margin-bottom: 5px; font-size: 22px; }
-        .login-box .subtitle { text-align: center; color: var(--text-light); font-size: 13px; margin-bottom: 20px; }
+        .login-box h2 { text-align: center; color: var(--primary-dark); margin-bottom: 5px; font-size: 24px; font-weight: 800; }
+        .login-box .subtitle { text-align: center; color: var(--text-light); font-size: 14px; margin-bottom: 20px; font-weight: 600; }
         .login-box .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .login-box .tab-buttons button { flex: 1; padding: 10px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-dark); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
-        .login-box .tab-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .login-box input, .login-box select { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--bg-color); }
-        .login-box input:focus { border-color: var(--primary); outline: none; background: var(--white); }
+        .login-box .tab-buttons button { flex: 1; padding: 12px; border: none; background: var(--bg-color); color: var(--text-dark); border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 700; transition: 0.2s; }
+        .login-box .tab-buttons button.active { background: var(--primary-dark); color: white; }
+        .login-box input, .login-box select { width: 100%; padding: 14px; margin: 6px 0; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; background: var(--bg-color); font-weight: 600; }
+        .login-box input:focus { border-color: var(--primary-dark); outline: none; background: var(--white); }
         
         .form-row { display: flex; gap: 10px; }
         .form-row .form-group { flex: 1; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-light); margin-bottom: 4px; font-weight: 600; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-dark); margin-bottom: 4px; font-weight: 700; }
 
         .hidden { display: none !important; }
-        .error { color: var(--danger); padding: 10px; background: #f8d7da; border-radius: 8px; margin: 10px 0; font-size: 13px; font-weight: 600; }
-        .success { color: var(--success); padding: 10px; background: #d1e7dd; border-radius: 8px; margin: 10px 0; font-size: 13px; font-weight: 600; }
+        .error { color: var(--danger); padding: 12px; background: #fee2e2; border-radius: 8px; margin: 10px 0; font-size: 14px; font-weight: 700; }
+        .success { color: #166534; padding: 12px; background: #dcfce7; border-radius: 8px; margin: 10px 0; font-size: 14px; font-weight: 700; }
 
-        /* زرار العودة */
-        .back-btn { background: var(--white); color: var(--text-dark); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 15px; font-weight: 600; }
-        .back-btn:hover { background: var(--bg-color); }
-        
-        /* قسم المراجعة */
-        .review-banner { background: var(--primary); color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 18px; }
-        .review-question-text { background: var(--bg-color); padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 15px; border-right: 4px solid var(--primary); line-height: 1.6; }
+        .back-btn { background: var(--white); color: var(--text-dark); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 15px; font-weight: 700; }
+        .review-banner { background: var(--primary-dark); color: white; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 800; font-size: 18px; }
 
         @media (max-width: 600px) {
             .form-row { flex-direction: column; gap: 0; }
             .exam-header { flex-direction: column; text-align: center; }
             .result-item { flex-direction: column; text-align: center; }
-            .content-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
         }
     </style>
 </head>
@@ -241,7 +229,6 @@
 
 <!-- ===== التطبيق الرئيسي ===== -->
 <div id="mainApp" class="hidden">
-    <!-- صفحة الدروس -->
     <div class="page active" id="page-lessons">
         <div class="hero-section">
             <h2>مرحباً بك في منصة العبور</h2>
@@ -250,16 +237,15 @@
         <div id="lessonsList"></div>
     </div>
 
-    <!-- صفحة الامتحان / المراجعة -->
     <div class="page" id="page-exam">
         <button class="back-btn" onclick="navigateTo('lessons')">⬅ العودة للدروس</button>
         <div class="exam-container">
             <div class="exam-header">
                 <h2 id="examTitle">📝 الامتحان</h2>
                 <div class="exam-meta" id="examMeta">
-                    <span id="examQuestionsCount" style="background:var(--secondary);color:var(--primary);padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;">0 سؤال</span>
-                    <span id="examTimeLimit" style="background:var(--bg-color);color:var(--text-light);padding:4px 12px;border-radius:20px;font-size:13px;">⏱ 20 دقيقة</span>
-                    <span id="progressText" style="background:#e0f2fe;color:#0369a1;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;">0 / 0</span>
+                    <span id="examQuestionsCount" style="background:#eff6ff;color:var(--primary-dark);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;">0 سؤال</span>
+                    <span id="examTimeLimit" style="background:var(--bg-color);color:var(--text-dark);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;">⏱ 20 دقيقة</span>
+                    <span id="progressText" style="background:#eff6ff;color:var(--primary-dark);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;">0 / 0</span>
                     <div class="timer-box" id="timerBox">
                         <i class="fas fa-clock"></i>
                         <span id="timerDisplay">20:00</span>
@@ -273,17 +259,15 @@
         </div>
     </div>
 
-    <!-- صفحة النتائج -->
     <div class="page" id="page-results">
         <div style="margin: 16px 0;">
-            <h2 style="font-size:18px; color:var(--text-dark); display:flex; align-items:center; gap:8px;"><i class="fas fa-chart-line" style="color:var(--primary);"></i> سجل النتائج</h2>
+            <h2 style="font-size:20px; color:var(--primary-dark); display:flex; align-items:center; gap:8px; font-weight:800;"><i class="fas fa-chart-line"></i> سجل النتائج</h2>
         </div>
         <div id="resultsList">
             <p style="color:var(--text-light);text-align:center;padding:20px;">جاري تحميل النتائج...</p>
         </div>
     </div>
 
-    <!-- صفحة الملف الشخصي -->
     <div class="page" id="page-profile">
         <div class="profile-card">
             <div class="avatar" id="profileAvatar">أ</div>
@@ -293,12 +277,11 @@
             <div class="field"><span class="label">النوع</span><span class="value" id="profileGender">-</span></div>
             <div class="field"><span class="label">عدد الامتحانات</span><span class="value" id="profileExams">0</span></div>
             <div class="field"><span class="label">المعدل العام</span><span class="value" id="profileAverage">-</span></div>
-            <button onclick="logout()" class="btn-primary" style="background:#dc3545; margin-top:20px;">🚪 تسجيل خروج</button>
+            <button onclick="logout()" class="btn-primary" style="background:var(--danger); margin-top:20px;">🚪 تسجيل خروج</button>
         </div>
     </div>
 </div>
 
-<!-- ===== شريط سفلي ===== -->
 <div class="bottom-nav hidden" id="bottomNav">
     <button class="nav-item active" onclick="navigateTo('lessons')">
         <i class="fas fa-home"></i>
@@ -341,7 +324,6 @@ let timerInterval = null;
 let timeRemaining = 1800;
 let examSettings = { questionCount: 10, timeLimit: 30 };
 
-// ==================== التحقق من الجلسة ====================
 function checkSession() {
     const saved = localStorage.getItem('studentSession');
     if (saved) {
@@ -361,7 +343,6 @@ function checkSession() {
     }
 }
 
-// ==================== تبويبات الدخول ====================
 function switchTab(tab) {
     document.getElementById('loginTab').className = tab === 'login' ? 'active' : '';
     document.getElementById('registerTab').className = tab === 'register' ? 'active' : '';
@@ -374,7 +355,6 @@ function switchTab(tab) {
 
 function validatePhone(phone) { return /^01[0-9]{9}$/.test(phone); }
 
-// ==================== تسجيل حساب جديد ====================
 function handleRegister(event) {
     event.preventDefault();
     const firstName = document.getElementById('regFirstName').value.trim();
@@ -400,7 +380,7 @@ function handleRegister(event) {
     
     db.ref('students').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
         if (snapshot.val()) {
-            errorDiv.innerHTML = `⚠️ <strong>هذا الرقم مسجل بالفعل!</strong><br><button onclick="switchTab('login')" style="margin-top:8px;padding:6px 14px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🚪 تسجيل الدخول</button>`;
+            errorDiv.innerHTML = `⚠️ <strong>هذا الرقم مسجل بالفعل!</strong><br><button onclick="switchTab('login')" style="margin-top:8px;padding:6px 14px;background:var(--primary-dark);color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🚪 تسجيل الدخول</button>`;
             errorDiv.classList.remove('hidden');
             return;
         }
@@ -417,15 +397,6 @@ function handleRegister(event) {
                 successDiv.textContent = '✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن';
                 successDiv.classList.remove('hidden');
                 errorDiv.classList.add('hidden');
-                document.getElementById('regFirstName').value = '';
-                document.getElementById('regFatherName').value = '';
-                document.getElementById('regFamilyName').value = '';
-                document.getElementById('regPhone').value = '';
-                document.getElementById('regParentPhone').value = '';
-                document.getElementById('regGrade').value = '';
-                document.getElementById('regGender').value = '';
-                document.getElementById('regPassword').value = '';
-                document.getElementById('regConfirmPassword').value = '';
                 setTimeout(() => switchTab('login'), 2000);
             }).catch((error) => {
                 errorDiv.textContent = '❌ خطأ: ' + error.message;
@@ -435,7 +406,6 @@ function handleRegister(event) {
     });
 }
 
-// ==================== تسجيل الدخول ====================
 function handleLogin(event) {
     event.preventDefault();
     const phone = document.getElementById('loginPhone').value.trim();
@@ -471,7 +441,6 @@ function logout() {
     document.getElementById('loginForm').reset();
 }
 
-// ==================== التنقل ====================
 function navigateTo(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const target = document.getElementById('page-' + page);
@@ -485,7 +454,6 @@ function navigateTo(page) {
     if (page === 'results') loadStudentResults();
     if (page === 'profile') loadProfile();
     
-    // إرجاع زراير الامتحان لو ظاهرة
     if (page !== 'exam') {
         document.getElementById('examMeta').style.display = 'flex';
         document.getElementById('submitBtn').style.display = 'block';
@@ -505,7 +473,7 @@ function loginSuccess() {
     navigateTo('lessons');
 }
 
-// ==================== عرض الدروس (مقسمة لمحاضرات) ====================
+// ==================== عرض الدروس (الستائر المتداخلة) ====================
 function loadLessons() {
     const container = document.getElementById('lessonsList');
     container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري التحميل...</p>';
@@ -525,60 +493,86 @@ function loadLessons() {
         
         if (lessonsArray.length === 0) { container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">📭 لا توجد دروس متاحة لصفك</p>'; return; }
         
-        const gradeNames = { '5': 'الثاني الإعدادي', '1': 'الأول الثانوي', '2': 'الثاني الثانوي', '3': 'الثالث الثانوي' };
         container.innerHTML = '';
         
         lessonsArray.forEach(lesson => {
             const exams = lesson.exams || [];
             const contents = lesson.contents || [];
             
-            // إنشاء بطاقة المحاضرة
             const box = document.createElement('div');
             box.className = 'lecture-box';
             
-            // المحتوى الداخلي
+            let subContentsHTML = '';
+            let subExamsHTML = '';
+
+            // تجهيز المحتوى
+            if (contents.length > 0) {
+                contents.forEach(c => {
+                    let btnClass = c.type === 'video' ? 'btn-file btn-video' : 'btn-file';
+                    let icon = c.type === 'pdf' ? 'fa-file-pdf' : (c.type === 'video' ? 'fa-play-circle' : 'fa-image');
+                    let label = c.type === 'pdf' ? 'فتح الملف' : (c.type === 'video' ? 'مشاهدة' : 'عرض الصورة');
+                    subContentsHTML += `
+                        <a href="${c.url}" target="_blank" class="btn-file ${btnClass}">
+                            <span>${c.title || 'محتوى'}</span>
+                            <span><i class="fas ${icon}"></i> ${label}</span>
+                        </a>
+                    `;
+                });
+            }
+
+            // تجهيز الامتحانات
+            if (exams.length > 0) {
+                exams.forEach((exam, index) => {
+                    subExamsHTML += `
+                        <button class="btn-file btn-exam" onclick="event.stopPropagation(); startExam('${lesson.id}', '${exam.name}', ${index})">
+                            <span>📝 ${exam.name}</span>
+                            <span><i class="fas fa-edit"></i> دخول الامتحان</span>
+                        </button>
+                    `;
+                });
+            }
+
             let contentHTML = '';
             
-            // قسم المحتوى (PDF/صور/فيديو)
-            if (contents.length > 0) {
-                contentHTML += `<div class="lecture-section"><div class="lecture-section-title"><i class="fas fa-folder-open" style="color:#f59e0b;"></i> محتوى المحاضرة:</div><div class="content-grid">`;
-                contents.forEach(c => {
-                    if (c.type === 'pdf') {
-                        contentHTML += `<a href="${c.url}" target="_blank" class="content-item-card content-pdf"><i class="fas fa-file-pdf"></i><span>${c.title || 'PDF'}</span></a>`;
-                    } else if (c.type === 'image') {
-                        contentHTML += `<a href="${c.url}" target="_blank" class="content-item-card content-image"><i class="fas fa-image"></i><span>${c.title || 'صورة'}</span></a>`;
-                    } else if (c.type === 'video') {
-                        contentHTML += `<a href="${c.url}" target="_blank" class="content-item-card content-video"><i class="fas fa-play-circle"></i><span>${c.title || 'فيديو'}</span></a>`;
-                    } else {
-                        contentHTML += `<a href="${c.url}" target="_blank" class="content-item-card content-link"><i class="fas fa-link"></i><span>${c.title || 'رابط'}</span></a>`;
-                    }
-                });
-                contentHTML += `</div></div>`;
+            if (subContentsHTML) {
+                contentHTML += `
+                    <div class="sub-accordion">
+                        <div class="sub-accordion-header" onclick="toggleSubAccordion('sub-cont-${lesson.id}')">
+                            <span><i class="fas fa-folder-open"></i> الشرح والمحتوى</span>
+                            <i class="fas fa-chevron-down" id="icon-sub-cont-${lesson.id}"></i>
+                        </div>
+                        <div class="sub-accordion-content" id="sub-cont-${lesson.id}">
+                            ${subContentsHTML}
+                        </div>
+                    </div>
+                `;
             }
-            
-            // قسم الامتحانات
-            if (exams.length > 0) {
-                contentHTML += `<div class="lecture-section"><div class="lecture-section-title"><i class="fas fa-file-alt" style="color:var(--primary);"></i> الامتحانات:</div>`;
-                exams.forEach((exam, index) => {
-                    contentHTML += `<button class="exam-btn" onclick="event.stopPropagation(); startExam('${lesson.id}', '${exam.name}', ${index})">
-                        <span>📝 ${exam.name}</span>
-                        <span style="font-size:12px; opacity:0.8;">⏱ ${exam.timeLimit} دقيقة • ${exam.questionCount === 'all' ? 'كل الأسئلة' : exam.questionCount + ' سؤال'}</span>
-                    </button>`;
-                });
-                contentHTML += `</div>`;
+
+            if (subExamsHTML) {
+                contentHTML += `
+                    <div class="sub-accordion">
+                        <div class="sub-accordion-header" onclick="toggleSubAccordion('sub-exam-${lesson.id}')">
+                            <span><i class="fas fa-file-alt"></i> التطبيق والامتحانات</span>
+                            <i class="fas fa-chevron-down" id="icon-sub-exam-${lesson.id}"></i>
+                        </div>
+                        <div class="sub-accordion-content" id="sub-exam-${lesson.id}">
+                            ${subExamsHTML}
+                        </div>
+                    </div>
+                `;
             }
-            
-            if (contents.length === 0 && exams.length === 0) {
-                contentHTML = '<p style="color:#999;text-align:center;font-size:13px;">لا يوجد محتوى أو امتحانات في هذه المحاضرة بعد.</p>';
+
+            if (!subContentsHTML && !subExamsHTML) {
+                contentHTML = '<p style="color:#999;text-align:center;font-size:14px;font-weight:600;">لا يوجد محتوى أو امتحانات في هذه المحاضرة بعد.</p>';
             }
             
             box.innerHTML = `
                 <div class="lecture-header" onclick="toggleAccordion('${lesson.id}')">
                     <h3><i class="fas fa-book"></i> ${lesson.name}</h3>
-                    <i class="fas fa-chevron-down" id="icon-${lesson.id}" style="color:var(--primary); transition:0.3s;"></i>
+                    <i class="fas fa-chevron-down" id="icon-${lesson.id}" style="transition:0.3s;"></i>
                 </div>
                 <div class="lecture-content" id="accordion-${lesson.id}">
-                    <p style="color:var(--text-light); font-size:13px; margin-bottom:15px;">${lesson.description || 'لا يوجد وصف'}</p>
+                    <p style="color:var(--text-light); font-size:14px; margin-bottom:15px; font-weight:600;">${lesson.description || 'لا يوجد وصف'}</p>
                     ${contentHTML}
                 </div>
             `;
@@ -589,6 +583,18 @@ function loadLessons() {
 
 function toggleAccordion(id) {
     const content = document.getElementById('accordion-' + id);
+    const icon = document.getElementById('icon-' + id);
+    if (content.style.display === 'block') {
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.display = 'block';
+        icon.style.transform = 'rotate(180deg)';
+    }
+}
+
+function toggleSubAccordion(id) {
+    const content = document.getElementById(id);
     const icon = document.getElementById('icon-' + id);
     if (content.style.display === 'block') {
         content.style.display = 'none';
@@ -678,7 +684,7 @@ function updateTimerDisplay() {
     const timerBox = document.getElementById('timerBox');
     if (timeRemaining < 60) timerBox.style.background = 'var(--danger)';
     else if (timeRemaining < 300) timerBox.style.background = '#f59e0b';
-    else timerBox.style.background = 'var(--text-dark)';
+    else timerBox.style.background = 'var(--primary-dark)';
 }
 
 // ==================== عرض الأسئلة ====================
@@ -782,14 +788,14 @@ function submitExam() {
     const passed = percentage >= 50;
     
     resultContainer.innerHTML = `
-        <h2 style="font-size:22px; color:var(--text-dark); margin-bottom:10px;">🎉 تم التسليم!</h2>
-        <div style="font-size:48px; font-weight:800; color:${passed ? 'var(--success)' : 'var(--danger)'};">${correct} / ${currentQuestions.length}</div>
-        <div style="font-size:16px; color:var(--text-light); margin-bottom:10px;">النسبة: ${percentage}%</div>
-        <div style="font-weight:bold; font-size:18px; color:${passed ? 'var(--success)' : 'var(--danger)'};">${passed ? '✅ ممتاز! أنت ناجح' : '⚠️ تحتاج للمزيد من المراجعة'}</div>
-        <div style="font-size:13px; color:var(--text-light); margin-top:15px;">الدرس: ${currentLessonName}</div>
+        <h2 style="font-size:24px; color:var(--primary-dark); margin-bottom:15px; font-weight:800;">🎉 تم التسليم!</h2>
+        <div style="font-size:56px; font-weight:900; color:${passed ? 'var(--success)' : 'var(--danger)'};">${correct} / ${currentQuestions.length}</div>
+        <div style="font-size:18px; color:var(--text-light); margin-bottom:10px; font-weight:700;">النسبة: ${percentage}%</div>
+        <div style="font-weight:800; font-size:20px; color:${passed ? 'var(--success)' : 'var(--danger)'};">${passed ? '✅ ممتاز! أنت ناجح' : '⚠️ تحتاج للمزيد من المراجعة'}</div>
+        <div style="font-size:14px; color:var(--text-light); margin-top:15px; font-weight:600;">الدرس: ${currentLessonName}</div>
     `;
     document.getElementById('submitBtn').classList.add('hidden');
-    saveResult(correct, percentage, userAnswers); // ✅ بنبعت الإجابات
+    saveResult(correct, percentage, userAnswers);
 }
 
 // ==================== حفظ النتيجة والإجابات ====================
@@ -810,9 +816,8 @@ async function saveResult(score, percentage, answers) {
             questionCount: currentQuestions.length,
             timeLimit: examSettings.timeLimit,
             timestamp: Date.now(),
-            answers: answers // ✅ حفظ الإجابات للمراجعة
+            answers: answers
         });
-        console.log('✅ تم حفظ النتيجة والإجابات');
     } catch (error) { console.error('❌ خطأ:', error); }
 }
 
