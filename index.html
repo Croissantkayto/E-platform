@@ -11,26 +11,24 @@
     
     <style>
         :root {
-            --primary-blue: #0284c7;     /* أزرق سماوي مشبع */
+            --primary-blue: #0284c7;
             --primary-hover: #0369a1;
-            --primary-light: #e0f2fe;    /* أزرق فاتح جداً للخلفيات */
-            --accent-green: #10b981;     /* أخضر زمردي للنجاح */
+            --primary-light: #e0f2fe;
+            --accent-green: #10b981;
             --accent-green-light: #d1fae5;
-            --bg-body: #f8fafc;          /* خلفية الصفحة رمادي فاتح جداً */
-            --bg-card: #ffffff;          /* أبيض نقي للكروت */
-            --text-main: #1e293b;        /* كحلي غامق للنصوص */
-            --text-muted: #64748b;       /* رمادي للنصوص الثانوية */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
             --border-color: #e2e8f0;
             --danger: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding-bottom: 80px; font-weight: 500; }
-        
-        /* إزالة الـ Container من الشريط العلوي عشان يملا الشاشة */
         .container { max-width: 800px; margin: 0 auto; padding: 0 16px; }
 
-        /* شريط علوي Full Width */
+        /* شريط علوي */
         .top-bar {
             background: var(--bg-card);
             padding: 12px 16px;
@@ -59,10 +57,8 @@
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* تصميم الستارة المتداخلة (المحاضرات) */
+        /* تصميم الستارة */
         .lecture-box { background: var(--bg-card); margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border-color); }
-        
-        /* الستارة الرئيسية */
         .lecture-header { background: var(--primary-blue); color: white; padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
         .lecture-header:hover { background: var(--primary-hover); }
         .lecture-header h3 { font-size: 17px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; }
@@ -107,6 +103,11 @@
         .option-label.wrong .custom-radio { border-color: var(--danger); }
         .option-label.wrong .custom-radio::after { background: var(--danger); }
 
+        /* الأسئلة المقالية */
+        .essay-textarea { width: 100%; padding: 16px; border-radius: 8px; border: 2px solid var(--border-color); font-family: inherit; font-size: 16px; margin-top: 10px; resize: vertical; min-height: 120px; }
+        .essay-textarea:focus { outline: none; border-color: var(--primary-blue); background: var(--bg-body); }
+        .essay-feedback { margin-top: 15px; padding: 15px; background: #f3e5f5; border-radius: 8px; border-right: 4px solid #6a1b9a; font-size: 15px; line-height: 1.6; }
+        
         .btn-submit { background: var(--primary-blue); color: white; padding: 16px; border: none; border-radius: 10px; font-size: 18px; font-weight: 800; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3); }
         .btn-submit:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
@@ -154,6 +155,7 @@
         .back-btn { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
         .back-btn:hover { background: var(--bg-body); }
         .review-banner { background: var(--primary-blue); color: white; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 800; font-size: 18px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3); }
+        .loading-spinner { text-align: center; padding: 20px; color: var(--primary-blue); font-weight: bold; font-size: 16px; }
 
         @media (max-width: 768px) {
             .form-row { flex-direction: column; gap: 0; }
@@ -238,7 +240,6 @@
     <!-- ===== التطبيق الرئيسي ===== -->
     <div id="mainApp" class="hidden">
         
-        <!-- صفحة الدروس (بدون Hero section) -->
         <div class="page active" id="page-lessons">
             <div style="margin: 20px 0 15px; display:flex; justify-content:space-between; align-items:center;">
                 <h2 style="font-size:20px; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:8px;">
@@ -248,7 +249,6 @@
             <div id="lessonsList"></div>
         </div>
 
-        <!-- صفحة الامتحان / المراجعة -->
         <div class="page" id="page-exam">
             <button class="back-btn" onclick="navigateTo('lessons')"><i class="fas fa-arrow-right"></i> العودة للدروس</button>
             <div class="exam-container">
@@ -271,7 +271,6 @@
             </div>
         </div>
 
-        <!-- صفحة النتائج (على شكل جدول) -->
         <div class="page" id="page-results">
             <div style="margin: 20px 0 15px;">
                 <h2 style="font-size:20px; color:var(--text-main); display:flex; align-items:center; gap:8px; font-weight:800;">
@@ -283,7 +282,6 @@
             </div>
         </div>
 
-        <!-- صفحة الملف الشخصي -->
         <div class="page" id="page-profile">
             <div style="margin: 20px 0 15px;">
                 <h2 style="font-size:20px; color:var(--text-main); display:flex; align-items:center; gap:8px; font-weight:800;">
@@ -304,7 +302,6 @@
     </div>
 </div>
 
-<!-- شريط سفلي -->
 <div class="bottom-nav hidden" id="bottomNav">
     <button class="nav-item active" onclick="navigateTo('lessons')">
         <i class="fas fa-home"></i>
@@ -321,7 +318,7 @@
 </div>
 
 <script>
-// ==================== Firebase Config ====================
+// ==================== إعدادات Firebase ====================
 const firebaseConfig = {
     apiKey: "AIzaSyCi3UL4g-4mKpBGEmccI6egsfgSCgwgaqA",
     authDomain: "e-learning-18a52.firebaseapp.com",
@@ -333,6 +330,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+const SERVER_URL = 'http://127.0.0.1:3000'; 
+
 // ==================== المتغيرات ====================
 let currentStudent = null;
 let currentStudentId = null;
@@ -342,10 +341,12 @@ let currentLessonName = '';
 let allQuestions = [];
 let currentQuestions = [];
 let userAnswers = {};
+let essayFeedbacks = {};
 let isSubmitted = false;
 let timerInterval = null;
 let timeRemaining = 1800;
 let examSettings = { questionCount: 10, timeLimit: 30 };
+let currentAttemptId = null; // عشان نعرف التظلمات بتاعة المحاولة دي
 
 function checkSession() {
     const saved = localStorage.getItem('studentSession');
@@ -355,6 +356,11 @@ function checkSession() {
             db.ref('students/' + data.id).once('value', (snapshot) => {
                 const student = snapshot.val();
                 if (student) {
+                    if (student.isBlocked) {
+                        alert('❌ هذا الحساب محظور. يرجى التواصل مع الإدارة.');
+                        localStorage.removeItem('studentSession');
+                        return;
+                    }
                     currentStudent = student;
                     currentStudentId = data.id;
                     loginSuccess();
@@ -442,6 +448,13 @@ function handleLogin(event) {
         if (!students) { errorDiv.textContent = '❌ لا يوجد حساب بهذا الرقم'; errorDiv.classList.remove('hidden'); return; }
         const studentId = Object.keys(students)[0];
         const studentData = students[studentId];
+        
+        if (studentData.isBlocked) {
+            errorDiv.textContent = '❌ هذا الحساب محظور. يرجى التواصل مع الإدارة.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
         if (studentData.password === password) {
             currentStudent = studentData;
             currentStudentId = studentId;
@@ -644,8 +657,10 @@ function startExam(lessonId, examName, examIndex) {
         currentExamIndex = examIndex;
         isSubmitted = false;
         userAnswers = {};
+        essayFeedbacks = {};
         currentQuestions = [];
         timeRemaining = timeLimit * 60;
+        currentAttemptId = null;
         
         navigateTo('exam');
         document.getElementById('examTitle').innerHTML = `<i class="fas fa-file-signature"></i> ${exam.name}`;
@@ -716,6 +731,18 @@ function renderQuestions() {
         const div = document.createElement('div');
         div.className = 'question-box';
         
+        if (q.isEssay) {
+            div.innerHTML = `
+                <div class="q-number">سؤال ${index + 1} (مقالي - ${q.maxScore} درجات)</div>
+                <div class="review-question-text">${q.questionText}</div>
+                <textarea id="essay-${q.id}" class="essay-textarea" placeholder="اكتب إجابتك هنا..." oninput="userAnswers['${q.id}'] = this.value; updateProgress();"></textarea>
+                <div id="feedback-${q.id}" class="essay-feedback hidden"></div>
+                <div id="complaint-btn-${q.id}" class="hidden" style="margin-top:10px;"></div>
+            `;
+            container.appendChild(div);
+            return; 
+        }
+        
         const isTextQuestion = q.isText || (!q.imageUrl && q.questionText);
         
         let questionContent = '';
@@ -756,6 +783,11 @@ function renderQuestions() {
     });
 }
 
+function updateProgress() {
+    const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
+    document.getElementById('progressText').textContent = `${answered} / ${currentQuestions.length}`;
+}
+
 // ==================== اختيار إجابة ====================
 function selectOption(questionId, optionIndex) {
     if (isSubmitted) return;
@@ -770,29 +802,31 @@ function selectOption(questionId, optionIndex) {
         const selectedLabel = document.getElementById(`opt-${questionId}-${optionIndex}`);
         if (selectedLabel) selectedLabel.classList.add('selected');
     }
-    
-    const answered = Object.keys(userAnswers).length;
-    document.getElementById('progressText').textContent = `${answered} / ${currentQuestions.length}`;
+    updateProgress();
 }
 
 // ==================== تسليم الامتحان ====================
-function submitExam() {
+async function submitExam() {
     if (isSubmitted) return;
     if (timerInterval) clearInterval(timerInterval);
     
-    const answered = Object.keys(userAnswers).length;
+    const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
     if (answered < currentQuestions.length) {
         if (!confirm(`⚠️ لم تجب على ${currentQuestions.length - answered} سؤال/أسئلة.\nهل تريد التسليم؟`)) { startTimer(); return; }
     }
     
     isSubmitted = true;
     document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').style.display = 'none';
     
-    let correct = 0;
+    let objectiveScore = 0;
+    let totalObjective = 0;
     currentQuestions.forEach(q => {
+        if (q.isEssay) return;
+        totalObjective++;
         const correctAnswer = q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer);
         if (userAnswers[q.id] === correctAnswer) {
-            correct++;
+            objectiveScore++;
             const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
             if (correctOpt) correctOpt.classList.add('correct');
         } else if (userAnswers[q.id] !== undefined) {
@@ -805,31 +839,124 @@ function submitExam() {
             if (correctOpt) correctOpt.classList.add('correct');
         }
     });
-    
+
     const resultContainer = document.getElementById('resultContainer');
     resultContainer.classList.remove('hidden');
-    const percentage = Math.round((correct / currentQuestions.length) * 100);
+    
+    let essayScore = 0;
+    let totalEssayMax = 0;
+    let isGradingComplete = true;
+    const essayQuestions = currentQuestions.filter(q => q.isEssay);
+    
+    if (essayQuestions.length > 0) {
+        resultContainer.innerHTML = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="color:var(--primary-blue); font-size:22px;">جاري تصحيح الأسئلة المقالية...</h2>
+                <div class="loading-spinner" style="margin-top:20px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        `;
+        
+        for (const q of essayQuestions) {
+            totalEssayMax += q.maxScore;
+            const ans = userAnswers[q.id] || '';
+            const feedbackDiv = document.getElementById(`feedback-${q.id}`);
+            const complaintBtn = document.getElementById(`complaint-btn-${q.id}`);
+            
+            if (!ans.trim()) {
+                if (feedbackDiv) {
+                    feedbackDiv.classList.remove('hidden');
+                    feedbackDiv.innerHTML = `<strong>الدرجة: 0 / ${q.maxScore}</strong><br>⚠️ لم يتم تقديم إجابة.`;
+                }
+                essayFeedbacks[q.id] = "لم يتم تقديم إجابة.";
+                continue;
+            }
+            
+            try {
+                const res = await fetch(SERVER_URL + '/grade-essay', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        questionText: q.questionText, 
+                        modelAnswer: q.modelAnswer, 
+                        studentAnswer: ans, 
+                        maxScore: q.maxScore 
+                    })
+                });
+                
+                if (!res.ok) throw new Error("Server error");
+                const data = await res.json();
+                
+                if (data.success) {
+                    essayScore += data.score;
+                    essayFeedbacks[q.id] = data.feedback;
+                    if (feedbackDiv) {
+                        feedbackDiv.classList.remove('hidden');
+                        feedbackDiv.innerHTML = `<strong style="color:#6a1b9a;">✅ تم التصحيح:</strong>
+                            <div style="font-size:18px; margin:8px 0; color:#4CAF50;"><strong>${data.score} / ${q.maxScore}</strong></div>
+                            <div>${data.feedback}</div>`;
+                    }
+                    if (complaintBtn) complaintBtn.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || "AI Error");
+                }
+            } catch (e) {
+                isGradingComplete = false;
+                essayFeedbacks[q.id] = "قيد التصحيح (سيتم التقييم قريباً)";
+                if (feedbackDiv) {
+                    feedbackDiv.classList.remove('hidden');
+                    feedbackDiv.innerHTML = `<strong style="color:#d97706;">⏳ إجابتك قيد التصحيح..</strong><br>سيتم إعلامك بالدرجة والتعليق قريباً في صفحة النتائج.`;
+                }
+                console.error("AI Grading Failed:", e);
+            }
+        }
+    }
+
+    const finalScore = objectiveScore + essayScore;
+    const totalScore = totalObjective + totalEssayMax;
+    const percentage = totalScore > 0 ? Math.round((finalScore / totalScore) * 100) : 0;
     const passed = percentage >= 50;
     
-    resultContainer.innerHTML = `
-        <div style="text-align:center; padding: 20px 0;">
-            <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-award"></i> تم التسليم!</h2>
-            <div style="font-size:64px; font-weight:900; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; line-height:1;">${correct} <span style="font-size:32px; color:var(--text-muted);">/</span> ${currentQuestions.length}</div>
-            <div style="font-size:18px; color:var(--text-muted); margin:10px 0 20px; font-weight:700;">النسبة: ${percentage}%</div>
-            <div style="font-weight:800; font-size:20px; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; background:${passed ? 'var(--accent-green-light)' : '#fee2e2'}; display:inline-block; padding:10px 20px; border-radius:10px;">
-                ${passed ? '<i class="fas fa-check-circle"></i> ممتاز! أنت ناجح' : '<i class="fas fa-exclamation-triangle"></i> تحتاج للمزيد من المراجعة'}
+    let resultText = '';
+    if (!isGradingComplete) {
+        resultText = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-clock"></i> تم تسليم إجاباتك!</h2>
+                <div style="font-size:24px; font-weight:800; color:var(--text-main); margin-bottom:15px;">
+                    الدرجة الاختيارية: ${objectiveScore} / ${totalObjective}
+                </div>
+                <div style="background:#fef3c7; border:1px solid #fcd34d; color:#92400e; padding:15px; border-radius:8px; font-weight:700;">
+                    <i class="fas fa-hourglass-half"></i> الأسئلة المقالية قيد التصحيح التلقائي. ستظهر الدرجة النهائية في صفحة "النتائج" قريباً.
+                </div>
             </div>
-        </div>
-    `;
-    document.getElementById('submitBtn').classList.add('hidden');
-    saveResult(correct, percentage, userAnswers);
+        `;
+    } else {
+        resultText = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-award"></i> تم التسليم!</h2>
+                <div style="font-size:64px; font-weight:900; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; line-height:1;">${finalScore} <span style="font-size:32px; color:var(--text-muted);">/</span> ${totalScore}</div>
+                <div style="font-size:18px; color:var(--text-muted); margin:10px 0 20px; font-weight:700;">النسبة: ${percentage}%</div>
+                ${essayQuestions.length > 0 ? `<div style="font-size:14px; color:var(--text-muted); margin-bottom:15px;">(الاختياري: ${objectiveScore} + المقالي: ${essayScore.toFixed(1)})</div>` : ''}
+                <div style="font-weight:800; font-size:20px; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; background:${passed ? 'var(--accent-green-light)' : '#fee2e2'}; display:inline-block; padding:10px 20px; border-radius:10px;">
+                    ${passed ? '<i class="fas fa-check-circle"></i> ممتاز! أنت ناجح' : '<i class="fas fa-exclamation-triangle"></i> تحتاج للمزيد من المراجعة'}
+                </div>
+            </div>
+        `;
+    }
+    resultContainer.innerHTML = resultText;
+
+    saveResult(objectiveScore, finalScore, totalObjective, totalScore, percentage, userAnswers, essayFeedbacks, !isGradingComplete, essayQuestions);
 }
 
 // ==================== حفظ النتيجة ====================
-async function saveResult(score, percentage, answers) {
+async function saveResult(objectiveScore, finalScore, totalObjective, totalScore, percentage, answers, feedbacks, needsGrading, essayQuestions) {
     try {
         const studentName = currentStudent ? currentStudent.fullName || currentStudent.firstName : 'طالب';
-        await db.ref('studentAttempts').push({
+        
+        let displayScore = needsGrading ? objectiveScore : finalScore;
+        let displayTotal = needsGrading ? totalObjective : totalScore;
+        let displayPercentage = needsGrading ? (totalObjective > 0 ? Math.round((objectiveScore / totalObjective) * 100) : 0) : percentage;
+
+        const attemptData = {
             studentId: currentStudentId,
             studentName: studentName,
             studentPhone: currentStudent ? currentStudent.phone : '',
@@ -837,18 +964,58 @@ async function saveResult(score, percentage, answers) {
             lessonId: currentLessonId,
             lessonName: currentLessonName,
             examIndex: currentExamIndex,
-            score: score,
-            totalQuestions: currentQuestions.length,
-            percentage: percentage,
+            score: displayScore,
+            totalQuestions: displayTotal,
+            percentage: displayPercentage,
             questionCount: currentQuestions.length,
             timeLimit: examSettings.timeLimit,
             timestamp: Date.now(),
-            answers: answers
-        });
+            answers: answers,
+            essayFeedbacks: feedbacks,
+            needsGrading: needsGrading,
+            objectiveScore: objectiveScore,
+            essayQuestionsToGrade: essayQuestions
+        };
+
+        // بناخد الـ ID عشان نستخدمه في التظلمات
+        const ref = await db.ref('studentAttempts').push(attemptData);
+        currentAttemptId = ref.key;
     } catch (error) { console.error('❌ خطأ:', error); }
 }
 
-// ==================== عرض النتائج (شكل جدول زي بسطتهالك) ====================
+// ==================== التظلم ====================
+async function submitComplaint(questionId, questionText, maxScore) {
+    if (!currentAttemptId) { alert('⚠️ لا يمكن تقديم التظلم الآن. حاول لاحقاً.'); return; }
+    const reason = prompt('اكتب سبب تظلمك (مثلاً: إجابتي صحيحة لكن لم تُحتسب):');
+    if (!reason || !reason.trim()) return;
+    try {
+        const aSnap = await db.ref('studentAttempts/' + currentAttemptId).once('value');
+        const attempt = aSnap.val() || {};
+        const compRef = db.ref('complaints').push();
+        await compRef.set({
+            attemptId: currentAttemptId,
+            studentId: currentStudentId,
+            studentName: currentStudent.fullName,
+            lessonName: attempt.lessonName || currentLessonName,
+            questionId, questionText,
+            studentAnswer: (attempt.answers || {})[questionId] || '',
+            aiFeedback: (attempt.essayFeedbacks || {})[questionId] || '',
+            aiScore: (attempt.essayScores || {})[questionId] ?? null,
+            maxScore: parseInt(maxScore),
+            reason: reason.trim(),
+            status: 'pending',
+            timestamp: Date.now()
+        });
+        await db.ref(`studentAttempts/${currentAttemptId}/complaints/${compRef.key}`).set({
+            questionId, reason: reason.trim(), status: 'pending', timestamp: Date.now()
+        });
+        const btn = document.getElementById(`complaint-btn-${questionId}`);
+        if (btn) btn.innerHTML = `<div style="background:#fef3c7;color:#92400e;padding:10px;border-radius:8px;font-weight:bold;text-align:center;font-size:14px;"><i class="fas fa-clock"></i> تم تقديم تظلمك وجاري مراجعته.</div>`;
+        alert('✅ تم إرسال التظلم بنجاح.');
+    } catch (e) { alert('❌ خطأ: ' + e.message); }
+} 
+
+// ==================== عرض النتائج ====================
 function loadStudentResults() {
     const container = document.getElementById('resultsList');
     container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">جاري التحميل...</p>';
@@ -877,13 +1044,18 @@ function loadStudentResults() {
             const date = new Date(attempt.timestamp);
             const dateStr = date.toLocaleDateString('ar-EG');
             const passed = attempt.percentage >= 50;
+            const isPending = attempt.needsGrading;
+            
+            let scoreDisplay = isPending 
+                ? `<span class="badge-score" style="background:#fef3c7; color:#92400e;"><i class="fas fa-hourglass-half"></i> قيد التصحيح</span>`
+                : `<span class="badge-score" style="${passed ? '' : 'background:#fee2e2; color:#b91c1c;'}">${attempt.score} / ${attempt.totalQuestions} (${attempt.percentage}%)</span>`;
             
             tableHTML += `
                 <tr>
                     <td>${attempt.lessonName || 'درس'}</td>
-                    <td><span class="badge-score" style="${passed ? '' : 'background:#fee2e2; color:#b91c1c;'}">${attempt.score} / ${attempt.totalQuestions} (${attempt.percentage}%)</span></td>
+                    <td>${scoreDisplay}</td>
                     <td style="color:var(--text-muted); font-size:13px;">${dateStr}</td>
-                    <td>${attempt.answers ? `<button class="btn-review" onclick="reviewExam('${attempt.id}')"><i class="fas fa-eye"></i> رؤية</button>` : '<span style="color:#999;font-size:12px;">غير متاح</span>'}</td>
+                    <td>${attempt.answers && !isPending ? `<button class="btn-review" onclick="reviewExam('${attempt.id}')"><i class="fas fa-eye"></i> رؤية</button>` : '<span style="color:#999;font-size:12px;">-</span>'}</td>
                 </tr>
             `;
         });
@@ -898,6 +1070,9 @@ function reviewExam(attemptId) {
     db.ref('studentAttempts/' + attemptId).once('value', (snapshot) => {
         const attempt = snapshot.val();
         if (!attempt || !attempt.answers) { alert('لا توجد إجابات محفوظة لهذا الامتحان.'); return; }
+        
+        // بنحفظ الـ ID عشان التظلم يشتغل من جوه المراجعة
+        currentAttemptId = attemptId;
         
         db.ref('questions').orderByChild('lessonId').equalTo(attempt.lessonId).once('value', (qSnapshot) => {
             const allQs = qSnapshot.val();
@@ -916,37 +1091,71 @@ function reviewExam(attemptId) {
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
             
-            questionsArray.forEach((q, index) => {
-                const studentAnswer = attempt.answers[q.id];
-                const options = ['أ', 'ب', 'ج', 'د'];
-                const correctAnswer = q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer);
-                const isCorrect = studentAnswer === correctAnswer;
+            // نجيب التظلمات الخاصة بالمحاولة دي عشان نعرف نعرضها
+            db.ref('studentAttempts/' + attemptId + '/complaints').once('value', (compSnap) => {
+                const attemptComplaints = compSnap.val() || {};
                 
-                const div = document.createElement('div');
-                div.className = 'question-box';
-                
-                let qContent = q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%; border-radius:8px; margin:10px 0;">` : `<div class="review-question-text">${q.questionText || ''}</div>`;
-                
-                let optionsHTML = '';
-                if (q.isTrueFalse) {
-                    optionsHTML = `
-                        <div class="option-label ${correctAnswer === true ? 'correct' : ''} ${studentAnswer === true && studentAnswer !== correctAnswer ? 'wrong' : ''}">${studentAnswer === true ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} صح ${correctAnswer === true ? '<i class="fas fa-check" style="float:left"></i>' : ''}</div>
-                        <div class="option-label ${correctAnswer === false ? 'correct' : ''} ${studentAnswer === false && studentAnswer !== correctAnswer ? 'wrong' : ''}">${studentAnswer === false ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} خطأ ${correctAnswer === false ? '<i class="fas fa-check" style="float:left"></i>' : ''}</div>
-                    `;
-                } else {
-                    const opts = q.options || ['أ', 'ب', 'ج', 'د'];
-                    opts.forEach((opt, i) => {
-                        const isSelected = studentAnswer === i;
-                        const isTheCorrectOne = correctAnswer === i;
-                        let className = 'option-label';
-                        if (isTheCorrectOne) className += ' correct';
-                        else if (isSelected && !isTheCorrectOne) className += ' wrong';
-                        optionsHTML += `<div class="${className}">${isSelected ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} ${options[i]}. ${opt} ${isTheCorrectOne ? '<i class="fas fa-check" style="float:left"></i>' : (isSelected ? '<i class="fas fa-times" style="float:left"></i>' : '')}</div>`;
-                    });
-                }
-                
-                div.innerHTML = `<div class="q-number">سؤال ${index + 1} ${isCorrect ? '<i class="fas fa-check-circle" style="color:var(--accent-green)"></i>' : '<i class="fas fa-times-circle" style="color:var(--danger)"></i>'}</div>${qContent}<div>${optionsHTML}</div>`;
-                container.appendChild(div);
+                questionsArray.forEach((q, index) => {
+                    const studentAnswer = attempt.answers[q.id];
+                    const options = ['أ', 'ب', 'ج', 'د'];
+                    const div = document.createElement('div');
+                    div.className = 'question-box';
+                    
+                    if (q.isEssay) {
+                        const aiFeedback = attempt.essayFeedbacks && attempt.essayFeedbacks[q.id] ? attempt.essayFeedbacks[q.id] : 'لا يوجد تعليق.';
+                        
+                        // هل الطالب عمل تظلم على السؤال ده في المحاولة دي؟
+                        const myComplaint = Object.values(attemptComplaints).find(c => c.questionId === q.id);
+let complaintSection = '';
+if (myComplaint && myComplaint.status === 'resolved') {
+    complaintSection = `<div style="margin-top:10px;background:#d1fae5;color:#065f46;padding:10px;border-radius:8px;font-weight:bold;text-align:center;font-size:14px;"><i class="fas fa-check-circle"></i> تمت مراجعة تظلمك${myComplaint.newScore !== undefined ? ' - الدرجة بعد المراجعة: ' + myComplaint.newScore : ' - تم تأكيد الدرجة'}</div>`;
+} else if (myComplaint) {
+    complaintSection = `<div style="margin-top:10px;background:#fef3c7;color:#92400e;padding:10px;border-radius:8px;font-weight:bold;text-align:center;font-size:14px;"><i class="fas fa-clock"></i> تم تقديم تظلمك وجاري مراجعته.</div>`;
+} else {
+    complaintSection = `<div id="complaint-btn-${q.id}" style="margin-top:10px;"><button class="btn-review" style="background:#fee2e2;color:#b91c1c;border-color:#fca5a5;" onclick="submitComplaint('${q.id}', '${q.questionText.replace(/'/g, "\\'")}', ${q.maxScore})"><i class="fas fa-exclamation-triangle"></i> تقديم تظلم</button></div>`;
+} 
+
+                        div.innerHTML = `
+                            <div class="q-number">سؤال ${index + 1} (مقالي - ${q.maxScore} درجات)</div>
+                            <div class="review-question-text">${q.questionText}</div>
+                            <div style="background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #eee; margin-bottom:10px;">
+                                <strong>إجابتك:</strong><br>${studentAnswer || '(لم تجب)'}
+                            </div>
+                            <div class="essay-feedback" style="background:#f3e5f5; border-right:4px solid #6a1b9a;">
+                                <strong>تعليق المصحح:</strong><br>${aiFeedback}
+                            </div>
+                            ${complaintSection}
+                        `;
+                        container.appendChild(div);
+                        return;
+                    }
+                    
+                    const correctAnswer = q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer);
+                    const isCorrect = studentAnswer === correctAnswer;
+                    
+                    let qContent = q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%; border-radius:8px; margin:10px 0;">` : `<div class="review-question-text">${q.questionText || ''}</div>`;
+                    
+                    let optionsHTML = '';
+                    if (q.isTrueFalse) {
+                        optionsHTML = `
+                            <div class="option-label ${correctAnswer === true ? 'correct' : ''} ${studentAnswer === true && studentAnswer !== correctAnswer ? 'wrong' : ''}">${studentAnswer === true ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} صح ${correctAnswer === true ? '<i class="fas fa-check" style="float:left"></i>' : ''}</div>
+                            <div class="option-label ${correctAnswer === false ? 'correct' : ''} ${studentAnswer === false && studentAnswer !== correctAnswer ? 'wrong' : ''}">${studentAnswer === false ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} خطأ ${correctAnswer === false ? '<i class="fas fa-check" style="float:left"></i>' : ''}</div>
+                        `;
+                    } else {
+                        const opts = q.options || ['أ', 'ب', 'ج', 'د'];
+                        opts.forEach((opt, i) => {
+                            const isSelected = studentAnswer === i;
+                            const isTheCorrectOne = correctAnswer === i;
+                            let className = 'option-label';
+                            if (isTheCorrectOne) className += ' correct';
+                            else if (isSelected && !isTheCorrectOne) className += ' wrong';
+                            optionsHTML += `<div class="${className}">${isSelected ? '<i class="fas fa-dot-circle"></i> ' : '<i class="far fa-circle"></i> '} ${options[i]}. ${opt} ${isTheCorrectOne ? '<i class="fas fa-check" style="float:left"></i>' : (isSelected ? '<i class="fas fa-times" style="float:left"></i>' : '')}</div>`;
+                        });
+                    }
+                    
+                    div.innerHTML = `<div class="q-number">سؤال ${index + 1} ${isCorrect ? '<i class="fas fa-check-circle" style="color:var(--accent-green)"></i>' : '<i class="fas fa-times-circle" style="color:var(--danger)"></i>'}</div>${qContent}<div>${optionsHTML}</div>`;
+                    container.appendChild(div);
+                });
             });
         });
     });
@@ -966,8 +1175,13 @@ function loadProfile() {
         if (!attempts) { document.getElementById('profileExams').textContent = '0'; document.getElementById('profileAverage').textContent = '-'; return; }
         const values = Object.values(attempts);
         document.getElementById('profileExams').textContent = values.length;
-        const avg = values.reduce((sum, a) => sum + (a.percentage || 0), 0) / values.length;
-        document.getElementById('profileAverage').textContent = Math.round(avg) + '%';
+        const validAttempts = values.filter(a => !a.needsGrading);
+        if (validAttempts.length === 0) {
+            document.getElementById('profileAverage').textContent = '-';
+        } else {
+            const avg = validAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / validAttempts.length;
+            document.getElementById('profileAverage').textContent = Math.round(avg) + '%';
+        }
     });
 }
 
