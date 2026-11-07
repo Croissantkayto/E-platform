@@ -330,7 +330,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const SERVER_URL = 'http://127.0.0.1:3000'; 
+const SERVER_URL = 'https://super-paper-3699.croissant2009a.workers.dev'; 
 
 // ==================== المتغيرات ====================
 let currentStudent = null;
@@ -342,6 +342,7 @@ let allQuestions = [];
 let currentQuestions = [];
 let userAnswers = {};
 let essayFeedbacks = {};
+let essayScores = {};
 let isSubmitted = false;
 let timerInterval = null;
 let timeRemaining = 1800;
@@ -658,6 +659,7 @@ function startExam(lessonId, examName, examIndex) {
         isSubmitted = false;
         userAnswers = {};
         essayFeedbacks = {};
+        essayScores = {};
         currentQuestions = [];
         timeRemaining = timeLimit * 60;
         currentAttemptId = null;
@@ -868,6 +870,7 @@ async function submitExam() {
                     feedbackDiv.innerHTML = `<strong>الدرجة: 0 / ${q.maxScore}</strong><br>⚠️ لم يتم تقديم إجابة.`;
                 }
                 essayFeedbacks[q.id] = "لم يتم تقديم إجابة.";
+                essayScores[q.id] = 0;
                 continue;
             }
             
@@ -888,6 +891,7 @@ async function submitExam() {
                 
                 if (data.success) {
                     essayScore += data.score;
+                    essayScores[q.id] = data.score;
                     essayFeedbacks[q.id] = data.feedback;
                     if (feedbackDiv) {
                         feedbackDiv.classList.remove('hidden');
@@ -972,6 +976,7 @@ async function saveResult(objectiveScore, finalScore, totalObjective, totalScore
             timestamp: Date.now(),
             answers: answers,
             essayFeedbacks: feedbacks,
+            essayScores: essayScores,
             needsGrading: needsGrading,
             objectiveScore: objectiveScore,
             essayQuestionsToGrade: essayQuestions
