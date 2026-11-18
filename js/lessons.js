@@ -43,14 +43,16 @@ function renderLessons() {
         let subContentsHTML = '';
         let subExamsHTML = '';
 
+        const viewed = getViewed();
         contents.forEach(c => {
             let icon = c.type === 'pdf' ? 'fa-file-pdf' : (c.type === 'video' ? 'fa-play-circle' : 'fa-image');
             let label = c.type === 'pdf' ? 'فتح الملف' : (c.type === 'video' ? 'مشاهدة الفيديو' : 'عرض الصورة');
+            const isViewed = viewed.includes(c.url);
             subContentsHTML += `
-                <a href="${c.url}" target="_blank" class="btn-file">
-                    <span>${c.title || 'محتوى'}</span>
+                <button class="btn-file ${isViewed ? 'viewed' : ''}" onclick="openContent('${c.type}', '${encodeURIComponent(c.url)}', '${encodeURIComponent(c.title || '')}')">
+                    <span>${isViewed ? '<i class="fas fa-circle-check" style="color:var(--accent-green)"></i> ' : ''}${c.title || 'محتوى'}</span>
                     <span style="color:var(--primary-blue)"><i class="fas ${icon}"></i> ${label}</span>
-                </a>
+                </button>
             `;
         });
 
