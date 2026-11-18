@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة ولي الأمر - منصة العبور</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';</script>
+</head>
+<body>
+<div class="top-bar"><div class="top-bar-content">
+    <div class="brand"><div class="logo"><i class="fas fa-people-roof"></i></div>
+        <div><h1>بوابة ولي الأمر</h1><div class="subtitle">منصة العبور - أ. أحمد رزق</div></div></div>
+    <a class="back-btn" style="margin:0;text-decoration:none;" href="index.html"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div></div>
+<div class="container">
+    <div class="login-box" id="pLogin">
+        <h2>متابعة نتائج الابن</h2>
+        <p class="subtitle">أدخل رقم الطالب ورقم ولي الأمر المسجل</p>
+        <form onsubmit="parentLogin(event)">
+            <input type="tel" id="pStudent" placeholder="رقم هاتف الطالب" maxlength="11" required>
+            <input type="tel" id="pParent" placeholder="رقم ولي الأمر" maxlength="11" required>
+            <button type="submit" class="btn-primary" style="margin-top:15px;"><i class="fas fa-search"></i> عرض النتائج</button>
+            <div id="pError" class="error hidden"></div>
+        </form>
+    </div>
+    <div id="pData" class="hidden"></div>
+</div>
+<script src="js/firebase-config.js"></script>
+<script src="js/parent.js"></script>
+</body>
+</html>
