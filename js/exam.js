@@ -1,0 +1,446 @@
+// ==================== متغيرات الامتحان ====================
+let currentExamIndex = null;
+let currentLessonId = null;
+let currentLessonName = '';
+let currentExamName = '';
+let allQuestions = [];
+let currentQuestions = [];
+let userAnswers = {};
+let essayFeedbacks = {};
+let essayScores = {};
+let isSubmitted = false;
+let timerInterval = null;
+let timeRemaining = 1800;
+let examSettings = { questionCount: 10, timeLimit: 30 };
+let currentAttemptId = null;
+
+// ==================== المسودات (الاستكمال لاحقاً) ====================
+// المسار: examDrafts/{studentId}/{lessonId}_{examIndex}
+let drafts = {};
+
+function draftKey(lessonId, examIndex) { return lessonId + '_' + examIndex; }
+function draftRef(lessonId, examIndex) { return db.ref(`examDrafts/${currentStudentId}/${draftKey(lessonId, examIndex)}`); }
+
+function countDraftAnswers(draft) {
+    return Object.keys(draft.answers || {}).filter(k => draft.answers[k] !== '').length;
+}
+
+function listenDrafts() {
+    if (!currentStudentId) return;
+    db.ref('examDrafts/' + currentStudentId).on('value', (snap) => {
+        drafts = snap.val() || {};
+        if (lessonsCache) renderLessons();
+    });
+}
+
+async function saveForLater() {
+    if (isSubmitted || currentQuestions.length === 0) return;
+    if (timerInterval) clearInterval(timerInterval);
+
+    const clean = {};
+    Object.keys(userAnswers).forEach(k => { if (userAnswers[k] !== undefined) clean[k] = userAnswers[k]; });
+
+    try {
+        await draftRef(currentLessonId, currentExamIndex).set({
+            lessonId: currentLessonId,
+            examIndex: currentExamIndex,
+            examName: currentExamName,
+            lessonName: currentLessonName,
+            questionIds: currentQuestions.map(q => q.id),
+            answers: clean,
+            timeRemaining: timeRemaining,
+            savedAt: Date.now()
+        });
+        alert('✅ تم حفظ إجاباتك. تقدر تكمل الامتحان من نفس المكان في أي وقت.\n(الوقت المتبقي محفوظ ولن يُحتسب وقت غيابك)');
+        navigateTo('lessons');
+    } catch (e) {
+        alert('❌ تعذر الحفظ: ' + e.message);
+        startTimer();
+    }
+}
+
+function restartExam(lessonId, examName, examIndex) {
+    if (!confirm('هل تريد حذف الإجابات المحفوظة وبدء الامتحان من جديد؟')) return;
+    delete drafts[draftKey(lessonId, examIndex)];
+    draftRef(lessonId, examIndex).remove().finally(() => startExam(lessonId, examName, examIndex));
+}
+
+function restoreAnswers() {
+    currentQuestions.forEach(q => {
+        const a = userAnswers[q.id];
+        if (a === undefined) return;
+        if (q.isEssay) {
+            const t = document.getElementById('essay-' + q.id);
+            if (t) t.value = a;
+        } else {
+            const label = document.getElementById(`opt-${q.id}-${a}`);
+            if (label) label.classList.add('selected');
+        }
+    });
+    updateProgress();
+}
+
+// ==================== بدء الامتحان ====================
+function startExam(lessonId, examName, examIndex) {
+    db.ref('lessons/' + lessonId).once('value', (snapshot) => {
+        const lesson = snapshot.val();
+        if (!lesson) { alert('⚠️ خطأ في تحميل البيانات'); return; }
+        const exams = lesson.exams || [];
+        const exam = exams[examIndex];
+        if (!exam) { alert('⚠️ الامتحان غير موجود'); return; }
+
+        let questionCount = exam.questionCount === 'all' ? 'all' : (parseInt(exam.questionCount) || 10);
+        const timeLimit = parseInt(exam.timeLimit) || 20;
+
+        examSettings.questionCount = questionCount;
+        examSettings.timeLimit = timeLimit;
+
+        const draft = drafts[draftKey(lessonId, examIndex)] || null;
+
+        currentLessonId = lessonId;
+        currentLessonName = lesson.name + ' - ' + exam.name;
+        currentExamName = exam.name;
+        currentExamIndex = examIndex;
+        isSubmitted = false;
+        userAnswers = {};
+        essayFeedbacks = {};
+        essayScores = {};
+        currentQuestions = [];
+        timeRemaining = draft ? Math.max(parseInt(draft.timeRemaining) || 0, 1) : timeLimit * 60;
+        currentAttemptId = null;
+
+        navigateTo('exam');
+        document.getElementById('examTitle').innerHTML = `<i class="fas fa-file-signature"></i> ${exam.name}`;
+        document.getElementById('examQuestionsCount').textContent = questionCount === 'all' ? 'كل الأسئلة' : `${questionCount} أسئلة`;
+        document.getElementById('examTimeLimit').innerHTML = `<i class="far fa-clock"></i> ${timeLimit} دقيقة`;
+        document.getElementById('progressText').textContent = '0 / 0';
+        document.getElementById('resultContainer').classList.add('hidden');
+        document.getElementById('resultContainer').innerHTML = '';
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('saveLaterBtn').style.display = 'block';
+        document.getElementById('examMeta').style.display = 'flex';
+        document.getElementById('timerBox').style.display = 'flex';
+
+        updateTimerDisplay();
+        startTimer();
+
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري تحميل الأسئلة...</p>';
+
+        db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
+            const questions = snapshot.val();
+            if (!questions) { container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>'; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('saveLaterBtn').style.display = 'none'; return; }
+
+            allQuestions = Object.keys(questions)
+                .map(key => ({ id: key, ...questions[key] }))
+                .filter(q => parseInt(q.examIndex) === parseInt(examIndex));
+
+            if (allQuestions.length === 0) { container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>'; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('saveLaterBtn').style.display = 'none'; return; }
+
+            // استكمال: نرجّع نفس الأسئلة بنفس الترتيب
+            let restored = [];
+            if (draft && draft.questionIds) {
+                restored = draft.questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
+            }
+
+            if (restored.length > 0) {
+                currentQuestions = restored;
+                userAnswers = Object.assign({}, draft.answers || {});
+            } else {
+                const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+                currentQuestions = questionCount === 'all' ? shuffled : shuffled.slice(0, Math.min(questionCount, shuffled.length));
+            }
+
+            document.getElementById('examQuestionsCount').textContent = `${currentQuestions.length} سؤال`;
+            document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
+
+            renderQuestions();
+            if (restored.length > 0) restoreAnswers();
+        });
+    });
+}
+
+// ==================== المؤقت ====================
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        if (timeRemaining <= 0) { clearInterval(timerInterval); alert('⏰ انتهى الوقت!'); submitExam(); }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const mins = Math.floor(timeRemaining / 60);
+    const secs = timeRemaining % 60;
+    document.getElementById('timerDisplay').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    const timerBox = document.getElementById('timerBox');
+    if (timeRemaining < 60) timerBox.style.background = 'var(--danger)';
+    else if (timeRemaining < 300) timerBox.style.background = '#f59e0b';
+    else timerBox.style.background = 'var(--text-main)';
+}
+
+// ==================== عرض الأسئلة ====================
+function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+    container.innerHTML = '';
+
+    currentQuestions.forEach((q, index) => {
+        const options = ['أ', 'ب', 'ج', 'د'];
+        const div = document.createElement('div');
+        div.className = 'question-box';
+
+        if (q.isEssay) {
+            div.innerHTML = `
+                <div class="q-number">سؤال ${index + 1} (مقالي - ${q.maxScore} درجات)</div>
+                <div class="review-question-text">${q.questionText}</div>
+                <textarea id="essay-${q.id}" class="essay-textarea" placeholder="اكتب إجابتك هنا..." oninput="userAnswers['${q.id}'] = this.value; updateProgress();"></textarea>
+                <div id="feedback-${q.id}" class="essay-feedback hidden"></div>
+                <div id="complaint-btn-${q.id}" class="hidden" style="margin-top:10px;"></div>
+            `;
+            container.appendChild(div);
+            return;
+        }
+
+        const isTextQuestion = q.isText || (!q.imageUrl && q.questionText);
+
+        let questionContent = '';
+        if (isTextQuestion && q.questionText) {
+            questionContent = `<div class="review-question-text">${q.questionText}</div>`;
+        } else if (q.imageUrl) {
+            questionContent = `<img src="${q.imageUrl}" alt="سؤال" loading="lazy" style="max-width:100%; border-radius:8px; margin:10px 0; border:1px solid var(--border-color);">`;
+        }
+
+        let optionsHTML = '';
+        if (q.isTrueFalse) {
+            optionsHTML = `
+                <label class="option-label" id="opt-${q.id}-true" onclick="selectOption('${q.id}', true)">
+                    <div class="custom-radio"></div> <span>صح</span>
+                </label>
+                <label class="option-label" id="opt-${q.id}-false" onclick="selectOption('${q.id}', false)">
+                    <div class="custom-radio"></div> <span>خطأ</span>
+                </label>
+            `;
+        } else if (isTextQuestion && q.options && q.options.length === 4) {
+            q.options.forEach((optText, optIndex) => {
+                optionsHTML += `
+                    <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
+                        <div class="custom-radio"></div> <span><strong>${options[optIndex]}.</strong> ${optText}</span>
+                    </label>`;
+            });
+        } else {
+            options.forEach((letter, optIndex) => {
+                optionsHTML += `
+                    <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
+                        <div class="custom-radio"></div> <span><strong>${letter}.</strong></span>
+                    </label>`;
+            });
+        }
+
+        div.innerHTML = `<div class="q-number">سؤال ${index + 1} من ${currentQuestions.length}</div>${questionContent}<div>${optionsHTML}</div>`;
+        container.appendChild(div);
+    });
+}
+
+function updateProgress() {
+    const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
+    document.getElementById('progressText').textContent = `${answered} / ${currentQuestions.length}`;
+}
+
+// ==================== اختيار إجابة ====================
+function selectOption(questionId, optionIndex) {
+    if (isSubmitted) return;
+    userAnswers[questionId] = optionIndex;
+    document.querySelectorAll(`[id^="opt-${questionId}-"]`).forEach(label => label.classList.remove('selected'));
+    const selectedLabel = document.getElementById(`opt-${questionId}-${optionIndex}`);
+    if (selectedLabel) selectedLabel.classList.add('selected');
+    updateProgress();
+}
+
+// ==================== تسليم الامتحان ====================
+async function submitExam() {
+    if (isSubmitted) return;
+    if (timerInterval) clearInterval(timerInterval);
+
+    const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
+    if (answered < currentQuestions.length) {
+        if (!confirm(`⚠️ لم تجب على ${currentQuestions.length - answered} سؤال/أسئلة.\nهل تريد التسليم؟`)) { startTimer(); return; }
+    }
+
+    isSubmitted = true;
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('saveLaterBtn').style.display = 'none';
+
+    // التسليم النهائي بيمسح المسودة المحفوظة
+    draftRef(currentLessonId, currentExamIndex).remove().catch(() => {});
+
+    let objectiveScore = 0;
+    let totalObjective = 0;
+    currentQuestions.forEach(q => {
+        if (q.isEssay) return;
+        totalObjective++;
+        const correctAnswer = q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer);
+        if (userAnswers[q.id] === correctAnswer) {
+            objectiveScore++;
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (correctOpt) correctOpt.classList.add('correct');
+        } else if (userAnswers[q.id] !== undefined) {
+            const wrongOpt = document.getElementById(`opt-${q.id}-${userAnswers[q.id]}`);
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (wrongOpt) wrongOpt.classList.add('wrong');
+            if (correctOpt) correctOpt.classList.add('correct');
+        } else {
+            const correctOpt = document.getElementById(`opt-${q.id}-${correctAnswer}`);
+            if (correctOpt) correctOpt.classList.add('correct');
+        }
+    });
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.classList.remove('hidden');
+
+    let essayScore = 0;
+    let totalEssayMax = 0;
+    let isGradingComplete = true;
+    const essayQuestions = currentQuestions.filter(q => q.isEssay);
+
+    if (essayQuestions.length > 0) {
+        resultContainer.innerHTML = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="color:var(--primary-blue); font-size:22px;">جاري تصحيح الأسئلة المقالية...</h2>
+                <div class="loading-spinner" style="margin-top:20px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+            </div>
+        `;
+
+        for (const q of essayQuestions) {
+            totalEssayMax += q.maxScore;
+            const ans = userAnswers[q.id] || '';
+            const feedbackDiv = document.getElementById(`feedback-${q.id}`);
+            const complaintBtn = document.getElementById(`complaint-btn-${q.id}`);
+
+            if (!ans.trim()) {
+                if (feedbackDiv) {
+                    feedbackDiv.classList.remove('hidden');
+                    feedbackDiv.innerHTML = `<strong>الدرجة: 0 / ${q.maxScore}</strong><br>⚠️ لم يتم تقديم إجابة.`;
+                }
+                essayFeedbacks[q.id] = "لم يتم تقديم إجابة.";
+                essayScores[q.id] = 0;
+                continue;
+            }
+
+            try {
+                const res = await fetch(SERVER_URL + '/grade-essay', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        questionText: q.questionText,
+                        modelAnswer: q.modelAnswer,
+                        studentAnswer: ans,
+                        maxScore: q.maxScore
+                    })
+                });
+
+                if (!res.ok) throw new Error("Server error");
+                const data = await res.json();
+
+                if (data.success) {
+                    essayScore += data.score;
+                    essayScores[q.id] = data.score;
+                    essayFeedbacks[q.id] = data.feedback;
+                    if (feedbackDiv) {
+                        feedbackDiv.classList.remove('hidden');
+                        feedbackDiv.innerHTML = `<strong style="color:#6a1b9a;">✅ تم التصحيح:</strong>
+                            <div style="font-size:18px; margin:8px 0; color:#4CAF50;"><strong>${data.score} / ${q.maxScore}</strong></div>
+                            <div>${data.feedback}</div>`;
+                    }
+                    if (complaintBtn) {
+                        complaintBtn.classList.remove('hidden');
+                        complaintBtn.innerHTML = `<button class="btn-review" style="background:#fee2e2;color:#b91c1c;border-color:#fca5a5;" onclick="submitComplaint('${q.id}', '${(q.questionText || '').replace(/'/g, "\\'")}', ${q.maxScore})"><i class="fas fa-exclamation-triangle"></i> تقديم تظلم</button>`;
+                    }
+                } else {
+                    throw new Error(data.error || "AI Error");
+                }
+            } catch (e) {
+                isGradingComplete = false;
+                essayFeedbacks[q.id] = "قيد التصحيح (سيتم التقييم قريباً)";
+                if (feedbackDiv) {
+                    feedbackDiv.classList.remove('hidden');
+                    feedbackDiv.innerHTML = `<strong style="color:#d97706;">⏳ إجابتك قيد التصحيح..</strong><br>سيتم إعلامك بالدرجة والتعليق قريباً في صفحة النتائج.`;
+                }
+                console.error("AI Grading Failed:", e);
+            }
+        }
+    }
+
+    const finalScore = objectiveScore + essayScore;
+    const totalScore = totalObjective + totalEssayMax;
+    const percentage = totalScore > 0 ? Math.round((finalScore / totalScore) * 100) : 0;
+    const passed = percentage >= 50;
+
+    let resultText = '';
+    if (!isGradingComplete) {
+        resultText = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-clock"></i> تم تسليم إجاباتك!</h2>
+                <div style="font-size:24px; font-weight:800; color:var(--text-main); margin-bottom:15px;">
+                    الدرجة الاختيارية: ${objectiveScore} / ${totalObjective}
+                </div>
+                <div style="background:#fef3c7; border:1px solid #fcd34d; color:#92400e; padding:15px; border-radius:8px; font-weight:700;">
+                    <i class="fas fa-hourglass-half"></i> الأسئلة المقالية قيد التصحيح التلقائي. ستظهر الدرجة النهائية في صفحة "النتائج" قريباً.
+                </div>
+            </div>
+        `;
+    } else {
+        resultText = `
+            <div style="text-align:center; padding: 20px 0;">
+                <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-award"></i> تم التسليم!</h2>
+                <div style="font-size:64px; font-weight:900; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; line-height:1;">${finalScore} <span style="font-size:32px; color:var(--text-muted);">/</span> ${totalScore}</div>
+                <div style="font-size:18px; color:var(--text-muted); margin:10px 0 20px; font-weight:700;">النسبة: ${percentage}%</div>
+                ${essayQuestions.length > 0 ? `<div style="font-size:14px; color:var(--text-muted); margin-bottom:15px;">(الاختياري: ${objectiveScore} + المقالي: ${essayScore.toFixed(1)})</div>` : ''}
+                <div style="font-weight:800; font-size:20px; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; background:${passed ? 'var(--accent-green-light)' : '#fee2e2'}; display:inline-block; padding:10px 20px; border-radius:10px;">
+                    ${passed ? '<i class="fas fa-check-circle"></i> ممتاز! أنت ناجح' : '<i class="fas fa-exclamation-triangle"></i> تحتاج للمزيد من المراجعة'}
+                </div>
+            </div>
+        `;
+    }
+    resultContainer.innerHTML = resultText;
+
+    saveResult(objectiveScore, finalScore, totalObjective, totalScore, percentage, userAnswers, essayFeedbacks, !isGradingComplete, essayQuestions);
+}
+
+// ==================== حفظ النتيجة ====================
+async function saveResult(objectiveScore, finalScore, totalObjective, totalScore, percentage, answers, feedbacks, needsGrading, essayQuestions) {
+    try {
+        const studentName = currentStudent ? currentStudent.fullName || currentStudent.firstName : 'طالب';
+
+        let displayScore = needsGrading ? objectiveScore : finalScore;
+        let displayTotal = needsGrading ? totalObjective : totalScore;
+        let displayPercentage = needsGrading ? (totalObjective > 0 ? Math.round((objectiveScore / totalObjective) * 100) : 0) : percentage;
+
+        const attemptData = {
+            studentId: currentStudentId,
+            studentName: studentName,
+            studentPhone: currentStudent ? currentStudent.phone : '',
+            studentGrade: currentStudent ? currentStudent.grade : '',
+            lessonId: currentLessonId,
+            lessonName: currentLessonName,
+            examIndex: currentExamIndex,
+            score: displayScore,
+            totalQuestions: displayTotal,
+            percentage: displayPercentage,
+            questionCount: currentQuestions.length,
+            timeLimit: examSettings.timeLimit,
+            timestamp: Date.now(),
+            answers: answers,
+            essayFeedbacks: feedbacks,
+            essayScores: essayScores,
+            needsGrading: needsGrading,
+            objectiveScore: objectiveScore,
+            essayQuestionsToGrade: essayQuestions
+        };
+
+        const ref = await db.ref('studentAttempts').push(attemptData);
+        currentAttemptId = ref.key;
+    } catch (error) { console.error('❌ خطأ:', error); }
+}
