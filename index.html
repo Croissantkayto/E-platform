@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>منصة العبور - أ. أحمد رزق</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top-bar" id="topBar">
+    <div class="top-bar-content">
+        <div class="brand">
+            <div class="logo"><i class="fas fa-book-open"></i></div>
+            <div>
+                <h1>منصة العبور</h1>
+                <div class="subtitle">أ. أحمد رزق - تاريخ</div>
+            </div>
+        </div>
+        <div class="user-menu">
+            <div class="user-avatar" onclick="navigateTo('profile')" id="avatarLetter">أ</div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div id="loginPage">
+        <div class="login-box">
+            <h2>تسجيل الدخول</h2>
+            <p class="subtitle">مرحباً بك، يرجى إدخال بياناتك</p>
+            <div class="tab-buttons">
+                <button id="loginTab" class="active" onclick="switchTab('login')">دخول</button>
+                <button id="registerTab" onclick="switchTab('register')">حساب جديد</button>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="tel" id="loginPhone" placeholder="رقم الهاتف (11 رقم)" required>
+                <input type="password" id="loginPassword" placeholder="كلمة المرور" required>
+                <button type="submit" class="btn-primary" style="margin-top:15px;"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+                <div id="loginError" class="error hidden"></div>
+            </form>
+            <form id="registerForm" onsubmit="handleRegister(event)" style="display:none;">
+                <div class="form-row">
+                    <div class="form-group"><label>الاسم الأول</label><input type="text" id="regFirstName" required></div>
+                    <div class="form-group"><label>اسم الأب</label><input type="text" id="regFatherName" required></div>
+                    <div class="form-group"><label>اسم العيلة</label><input type="text" id="regFamilyName" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="regPhone" placeholder="01xxxxxxxxx" required maxlength="11"></div>
+                    <div class="form-group"><label>رقم ولي الأمر</label><input type="tel" id="regParentPhone" placeholder="01xxxxxxxxx" required maxlength="11"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>الصف</label>
+                        <select id="regGrade" required>
+                            <option value="">اختر...</option>
+                            <option value="5">الثاني الإعدادي</option>
+                            <option value="1">الأول الثانوي</option>
+                            <option value="2">الثاني الثانوي</option>
+                            <option value="3">الثالث الثانوي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>النوع</label>
+                        <select id="regGender" required>
+                            <option value="">اختر...</option>
+                            <option value="ذكر">ذكر</option>
+                            <option value="أنثى">أنثى</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="password" id="regPassword" placeholder="كلمة المرور (6 أحرف)" required minlength="6">
+                <input type="password" id="regConfirmPassword" placeholder="تأكيد كلمة المرور" required minlength="6">
+                <button type="submit" class="btn-primary" style="margin-top:15px;"><i class="fas fa-user-plus"></i> إنشاء حساب</button>
+                <div id="registerError" class="error hidden"></div>
+                <div id="registerSuccess" class="success hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden">
+        <div class="page active" id="page-lessons">
+            <div style="margin: 20px 0 15px; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-size:20px; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-layer-group" style="color:var(--primary-blue);"></i> المحاضرات والدروس
+                </h2>
+            </div>
+            <div id="lessonsList"></div>
+        </div>
+
+        <div class="page" id="page-exam">
+            <button class="back-btn" onclick="navigateTo('lessons')"><i class="fas fa-arrow-right"></i> العودة للدروس</button>
+            <div class="exam-container">
+                <div class="exam-header">
+                    <h2 id="examTitle"><i class="fas fa-file-alt"></i> الامتحان</h2>
+                    <div class="exam-meta" id="examMeta">
+                        <span id="examQuestionsCount" style="background:var(--primary-light);color:var(--primary-hover);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;">0 سؤال</span>
+                        <span id="examTimeLimit" style="background:var(--bg-body);color:var(--text-main);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700; margin: 0 5px;"><i class="far fa-clock"></i> 20 دقيقة</span>
+                        <span id="progressText" style="background:var(--primary-light);color:var(--primary-hover);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;">0 / 0</span>
+                        <div class="timer-box" id="timerBox" style="display:none;">
+                            <i class="fas fa-stopwatch"></i>
+                            <span id="timerDisplay">20:00</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="reviewBanner" class="review-banner hidden"></div>
+                <div id="questionsContainer"></div>
+                <button class="btn-submit" id="submitBtn" onclick="submitExam()"><i class="fas fa-check-circle"></i> تسليم الامتحان</button>
+                <button class="btn-save-later" id="saveLaterBtn" onclick="saveForLater()"><i class="fas fa-bookmark"></i> حفظ واستكمال لاحقاً</button>
+                <div id="resultContainer" class="hidden result-box"></div>
+            </div>
+        </div>
+
+        <div class="page" id="page-results">
+            <div style="margin: 20px 0 15px;">
+                <h2 style="font-size:20px; color:var(--text-main); display:flex; align-items:center; gap:8px; font-weight:800;">
+                    <i class="fas fa-chart-bar" style="color:var(--primary-blue);"></i> نتائج الامتحانات
+                </h2>
+            </div>
+            <div id="resultsList" class="results-table-container">
+                <p style="color:var(--text-muted);text-align:center;padding:20px;">جاري تحميل النتائج...</p>
+            </div>
+        </div>
+
+        <div class="page" id="page-profile">
+            <div style="margin: 20px 0 15px;">
+                <h2 style="font-size:20px; color:var(--text-main); display:flex; align-items:center; gap:8px; font-weight:800;">
+                    <i class="fas fa-user-circle" style="color:var(--primary-blue);"></i> الملف الشخصي
+                </h2>
+            </div>
+            <div class="profile-card">
+                <div class="avatar" id="profileAvatar">أ</div>
+                <div class="field"><span class="label">الاسم</span><span class="value" id="profileName">-</span></div>
+                <div class="field"><span class="label">رقم الهاتف</span><span class="value" id="profilePhone">-</span></div>
+                <div class="field"><span class="label">الصف</span><span class="value" id="profileGrade">-</span></div>
+                <div class="field"><span class="label">النوع</span><span class="value" id="profileGender">-</span></div>
+                <div class="field"><span class="label">عدد الامتحانات</span><span class="value" id="profileExams">0</span></div>
+                <div class="field"><span class="label">المعدل العام</span><span class="value" id="profileAverage">-</span></div>
+                <button onclick="logout()" class="btn-primary" style="background:var(--danger); margin-top:20px;"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav hidden" id="bottomNav">
+    <button class="nav-item active" onclick="navigateTo('lessons')"><i class="fas fa-home"></i><span>الدروس</span></button>
+    <button class="nav-item" onclick="navigateTo('results')"><i class="fas fa-chart-pie"></i><span>النتائج</span></button>
+    <button class="nav-item" onclick="navigateTo('profile')"><i class="fas fa-user"></i><span>حسابي</span></button>
+</div>
+
+<!-- الترتيب مهم -->
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/exam.js"></script>
+<script src="js/results.js"></script>
+<script src="js/complaints.js"></script>
+<script src="js/app-init.js"></script>
+</body>
+</html>
