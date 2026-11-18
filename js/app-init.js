@@ -1,3 +1,14 @@
+// ==================== الوضع الليلي ====================
+function applyTheme(t) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem('theme', t); } catch (e) {}
+    const b = document.getElementById('themeBtn');
+    if (b) b.innerHTML = t === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    const m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.content = t === 'dark' ? '#0f172a' : '#0284c7';
+}
+function toggleTheme() { applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); }
+
 // ==================== التنقل ====================
 function navigateTo(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -30,12 +41,18 @@ function loginSuccess() {
     document.getElementById('avatarLetter').textContent = name.charAt(0);
     document.getElementById('profileAvatar').textContent = name.charAt(0);
     listenDrafts();
+    listenAttempts();
+    listenAnnouncements();
     loadLessons();
     navigateTo('lessons');
 }
 
 // ==================== تشغيل الصفحة ====================
 window.onload = function() {
+    applyTheme(localStorage.getItem('theme') || 'light');
     document.getElementById('bottomNav').classList.add('hidden');
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
     checkSession();
 };

@@ -124,6 +124,10 @@ function handleLogin(event) {
 function logout() {
     if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
     if (currentStudentId) db.ref('examDrafts/' + currentStudentId).off();
+    if (typeof attemptsQuery !== 'undefined' && attemptsQuery) attemptsQuery.off();
+    ['lessons', 'units', 'announcements'].forEach(p => db.ref(p).off());
+    attemptsCache = []; lessonsCache = null; unitsCache = null; currentUnitId = null; searchTerm = ''; examActive = false;
+    const si = document.getElementById('searchInput'); if (si) si.value = '';
     localStorage.removeItem('studentSession');
     currentStudent = null; currentStudentId = null;
     drafts = {};

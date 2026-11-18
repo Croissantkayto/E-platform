@@ -13,6 +13,10 @@ let timerInterval = null;
 let timeRemaining = 1800;
 let examSettings = { questionCount: 10, timeLimit: 30 };
 let currentAttemptId = null;
+let examActive = false;
+let autosaveTimer = null;
+let tabLeaves = 0;
+let leftFlag = false;
 
 // ==================== المسودات (الاستكمال لاحقاً) ====================
 // المسار: examDrafts/{studentId}/{lessonId}_{examIndex}
@@ -33,29 +37,71 @@ function listenDrafts() {
     });
 }
 
-async function saveForLater() {
-    if (isSubmitted || currentQuestions.length === 0) return;
-    if (timerInterval) clearInterval(timerInterval);
-
+function buildDraft(auto) {
     const clean = {};
     Object.keys(userAnswers).forEach(k => { if (userAnswers[k] !== undefined) clean[k] = userAnswers[k]; });
+    const perms = {};
+    currentQuestions.forEach(q => { if (q._perm) perms[q.id] = q._perm; });
+    return {
+        lessonId: currentLessonId, examIndex: currentExamIndex, examName: currentExamName, lessonName: currentLessonName,
+        questionIds: currentQuestions.map(q => q.id), answers: clean, perms: perms, tabLeaves: tabLeaves,
+        timeRemaining: timeRemaining, autoSaved: !!auto, savedAt: Date.now()
+    };
+}
 
+// ---------- الحفظ التلقائي ----------
+function setAutosaveStatus(s) {
+    const el = document.getElementById('autosaveStatus');
+    if (!el) return;
+    el.innerHTML = s === 'saving' ? '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'
+        : s === 'saved' ? '<i class="fas fa-cloud-arrow-up"></i> تم الحفظ تلقائياً'
+        : s === 'error' ? '⚠️ تعذر الحفظ' : '';
+}
+
+function scheduleAutosave() {
+    if (!examActive || isSubmitted || !currentQuestions.length) return;
+    clearTimeout(autosaveTimer);
+    setAutosaveStatus('saving');
+    autosaveTimer = setTimeout(autosaveNow, 2500);
+}
+
+async function autosaveNow() {
+    if (!examActive || isSubmitted || !currentQuestions.length) return;
     try {
-        await draftRef(currentLessonId, currentExamIndex).set({
-            lessonId: currentLessonId,
-            examIndex: currentExamIndex,
-            examName: currentExamName,
-            lessonName: currentLessonName,
-            questionIds: currentQuestions.map(q => q.id),
-            answers: clean,
-            timeRemaining: timeRemaining,
-            savedAt: Date.now()
-        });
-        alert('✅ تم حفظ إجاباتك. تقدر تكمل الامتحان من نفس المكان في أي وقت.\n(الوقت المتبقي محفوظ ولن يُحتسب وقت غيابك)');
+        await draftRef(currentLessonId, currentExamIndex).set(buildDraft(true));
+        if (!isSubmitted) setAutosaveStatus('saved');
+    } catch (e) { setAutosaveStatus('error'); }
+}
+
+// ---------- تسجيل الخروج من صفحة الامتحان ----------
+document.addEventListener('visibilitychange', () => {
+    if (!examActive || isSubmitted) return;
+    if (document.hidden) { tabLeaves++; leftFlag = true; autosaveNow(); }
+    else if (leftFlag) { leftFlag = false; showToast(`⚠️ تم تسجيل خروجك من صفحة الامتحان (${tabLeaves})`); }
+});
+
+// ---------- الحفظ اليدوي والخروج ----------
+async function saveForLater(silent) {
+    if (isSubmitted || currentQuestions.length === 0) return;
+    if (timerInterval) clearInterval(timerInterval);
+    clearTimeout(autosaveTimer);
+    try {
+        await draftRef(currentLessonId, currentExamIndex).set(buildDraft(false));
+        examActive = false;
+        if (silent !== true) alert('✅ تم حفظ إجاباتك. تقدر تكمل الامتحان من نفس المكان في أي وقت.\n(الوقت المتبقي محفوظ ولن يُحتسب وقت غيابك)');
         navigateTo('lessons');
     } catch (e) {
         alert('❌ تعذر الحفظ: ' + e.message);
         startTimer();
+    }
+}
+
+async function leaveExam() {
+    if (examActive && !isSubmitted && currentQuestions.length) {
+        if (!confirm('سيتم حفظ إجاباتك لتكملها لاحقاً (الوقت المتبقي يتوقف). هل تريد الخروج؟')) return;
+        await saveForLater(true);
+    } else {
+        navigateTo('lessons');
     }
 }
 
@@ -80,6 +126,17 @@ function restoreAnswers() {
     updateProgress();
 }
 
+// ==================== ترتيب الاختيارات العشوائي ====================
+function assignPerm(q) {
+    if (q._perm || q.isEssay || q.isTrueFalse) return;
+    const isText = q.isText || (!q.imageUrl && q.questionText);
+    if (isText && q.options && q.options.length === 4) {
+        const p = [0, 1, 2, 3];
+        for (let i = 3; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+        q._perm = p;
+    }
+}
+
 // ==================== بدء الامتحان ====================
 function startExam(lessonId, examName, examIndex) {
     db.ref('lessons/' + lessonId).once('value', (snapshot) => {
@@ -89,13 +146,14 @@ function startExam(lessonId, examName, examIndex) {
         const exam = exams[examIndex];
         if (!exam) { alert('⚠️ الامتحان غير موجود'); return; }
 
+        const draft = drafts[draftKey(lessonId, examIndex)] || null;
+        const av = examAvailability(lessonId, examIndex, exam);
+        if (!av.timeOk || (!av.attemptsOk && !draft)) { alert('⛔ ' + av.reason); return; }
+
         let questionCount = exam.questionCount === 'all' ? 'all' : (parseInt(exam.questionCount) || 10);
         const timeLimit = parseInt(exam.timeLimit) || 20;
-
         examSettings.questionCount = questionCount;
         examSettings.timeLimit = timeLimit;
-
-        const draft = drafts[draftKey(lessonId, examIndex)] || null;
 
         currentLessonId = lessonId;
         currentLessonName = lesson.name + ' - ' + exam.name;
@@ -106,8 +164,21 @@ function startExam(lessonId, examName, examIndex) {
         essayFeedbacks = {};
         essayScores = {};
         currentQuestions = [];
-        timeRemaining = draft ? Math.max(parseInt(draft.timeRemaining) || 0, 1) : timeLimit * 60;
         currentAttemptId = null;
+
+        // الوقت: الحفظ اليدوي يوقف الوقت، والتلقائي (انقطاع) الوقت بيكمل
+        let tr = timeLimit * 60;
+        if (draft) {
+            tr = parseInt(draft.timeRemaining) || 0;
+            if (draft.autoSaved && draft.savedAt) tr -= Math.floor((Date.now() - draft.savedAt) / 1000);
+            tr = Math.max(tr, 1);
+        }
+        timeRemaining = tr;
+        tabLeaves = draft ? (parseInt(draft.tabLeaves) || 0) : 0;
+        leftFlag = false;
+        examActive = true;
+        clearTimeout(autosaveTimer);
+        setAutosaveStatus('');
 
         navigateTo('exam');
         document.getElementById('examTitle').innerHTML = `<i class="fas fa-file-signature"></i> ${exam.name}`;
@@ -128,17 +199,24 @@ function startExam(lessonId, examName, examIndex) {
         const container = document.getElementById('questionsContainer');
         container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري تحميل الأسئلة...</p>';
 
+        const stop = (html) => {
+            container.innerHTML = html;
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('saveLaterBtn').style.display = 'none';
+            if (timerInterval) clearInterval(timerInterval);
+            examActive = false;
+        };
+
         db.ref('questions').orderByChild('lessonId').equalTo(lessonId).once('value', (snapshot) => {
             const questions = snapshot.val();
-            if (!questions) { container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>'; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('saveLaterBtn').style.display = 'none'; return; }
+            if (!questions) { stop('<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة</p>'); return; }
 
             allQuestions = Object.keys(questions)
                 .map(key => ({ id: key, ...questions[key] }))
                 .filter(q => parseInt(q.examIndex) === parseInt(examIndex));
 
-            if (allQuestions.length === 0) { container.innerHTML = '<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>'; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('saveLaterBtn').style.display = 'none'; return; }
+            if (allQuestions.length === 0) { stop('<p style="text-align:center;color:#ff9800;padding:20px;">⚠️ لا توجد أسئلة لهذا الامتحان</p>'); return; }
 
-            // استكمال: نرجّع نفس الأسئلة بنفس الترتيب
             let restored = [];
             if (draft && draft.questionIds) {
                 restored = draft.questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
@@ -147,10 +225,12 @@ function startExam(lessonId, examName, examIndex) {
             if (restored.length > 0) {
                 currentQuestions = restored;
                 userAnswers = Object.assign({}, draft.answers || {});
+                currentQuestions.forEach(q => { if (draft.perms && draft.perms[q.id]) q._perm = Array.from(draft.perms[q.id]); });
             } else {
                 const shuffled = allQuestions.sort(() => 0.5 - Math.random());
                 currentQuestions = questionCount === 'all' ? shuffled : shuffled.slice(0, Math.min(questionCount, shuffled.length));
             }
+            currentQuestions.forEach(assignPerm);
 
             document.getElementById('examQuestionsCount').textContent = `${currentQuestions.length} سؤال`;
             document.getElementById('progressText').textContent = `0 / ${currentQuestions.length}`;
@@ -195,7 +275,7 @@ function renderQuestions() {
             div.innerHTML = `
                 <div class="q-number">سؤال ${index + 1} (مقالي - ${q.maxScore} درجات)</div>
                 <div class="review-question-text">${q.questionText}</div>
-                <textarea id="essay-${q.id}" class="essay-textarea" placeholder="اكتب إجابتك هنا..." oninput="userAnswers['${q.id}'] = this.value; updateProgress();"></textarea>
+                <textarea id="essay-${q.id}" class="essay-textarea" placeholder="اكتب إجابتك هنا..." oninput="userAnswers['${q.id}'] = this.value; updateProgress(); scheduleAutosave();"></textarea>
                 <div id="feedback-${q.id}" class="essay-feedback hidden"></div>
                 <div id="complaint-btn-${q.id}" class="hidden" style="margin-top:10px;"></div>
             `;
@@ -223,10 +303,10 @@ function renderQuestions() {
                 </label>
             `;
         } else if (isTextQuestion && q.options && q.options.length === 4) {
-            q.options.forEach((optText, optIndex) => {
+            (q._perm || [0, 1, 2, 3]).forEach((optIndex, pos) => {
                 optionsHTML += `
                     <label class="option-label" id="opt-${q.id}-${optIndex}" onclick="selectOption('${q.id}', ${optIndex})">
-                        <div class="custom-radio"></div> <span><strong>${options[optIndex]}.</strong> ${optText}</span>
+                        <div class="custom-radio"></div> <span><strong>${options[pos]}.</strong> ${q.options[optIndex]}</span>
                     </label>`;
             });
         } else {
@@ -256,6 +336,7 @@ function selectOption(questionId, optionIndex) {
     const selectedLabel = document.getElementById(`opt-${questionId}-${optionIndex}`);
     if (selectedLabel) selectedLabel.classList.add('selected');
     updateProgress();
+    scheduleAutosave();
 }
 
 // ==================== تسليم الامتحان ====================
@@ -269,6 +350,9 @@ async function submitExam() {
     }
 
     isSubmitted = true;
+    examActive = false;
+    clearTimeout(autosaveTimer);
+    setAutosaveStatus('');
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').style.display = 'none';
     document.getElementById('saveLaterBtn').style.display = 'none';
@@ -437,10 +521,13 @@ async function saveResult(objectiveScore, finalScore, totalObjective, totalScore
             essayScores: essayScores,
             needsGrading: needsGrading,
             objectiveScore: objectiveScore,
+            tabLeaves: tabLeaves,
             essayQuestionsToGrade: essayQuestions
         };
 
         const ref = await db.ref('studentAttempts').push(attemptData);
         currentAttemptId = ref.key;
+        draftRef(attemptData.lessonId, attemptData.examIndex).remove().catch(() => {});
+        if (!needsGrading) updateLeaderboard(attemptData);
     } catch (error) { console.error('❌ خطأ:', error); }
 }

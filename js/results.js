@@ -1,51 +1,120 @@
-// ==================== عرض النتائج ====================
-function loadStudentResults() {
-    const container = document.getElementById('resultsList');
-    container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">جاري التحميل...</p>';
-    if (!currentStudentId) { container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">لا توجد نتائج</p>'; return; }
+// ==================== النتائج (من كاش مباشر) ====================
+let attemptsCache = [];
+let attemptsQuery = null;
 
-    db.ref('studentAttempts').orderByChild('studentId').equalTo(currentStudentId).on('value', (snapshot) => {
-        const attempts = snapshot.val();
-        if (!attempts) { container.innerHTML = '<p style="color:#999;text-align:center;padding:20px; background:white; border-radius:10px;">لا توجد نتائج سابقة</p>'; return; }
-
-        const sorted = Object.keys(attempts).map(key => ({ id: key, ...attempts[key] })).sort((a, b) => b.timestamp - a.timestamp);
-
-        let tableHTML = `
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>اسم الامتحان</th>
-                        <th>الدرجة</th>
-                        <th>التاريخ</th>
-                        <th>الإجراء</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        sorted.forEach(attempt => {
-            const date = new Date(attempt.timestamp);
-            const dateStr = date.toLocaleDateString('ar-EG');
-            const passed = attempt.percentage >= 50;
-            const isPending = attempt.needsGrading;
-
-            let scoreDisplay = isPending
-                ? `<span class="badge-score" style="background:#fef3c7; color:#92400e;"><i class="fas fa-hourglass-half"></i> قيد التصحيح</span>`
-                : `<span class="badge-score" style="${passed ? '' : 'background:#fee2e2; color:#b91c1c;'}">${attempt.score} / ${attempt.totalQuestions} (${attempt.percentage}%)</span>`;
-
-            tableHTML += `
-                <tr>
-                    <td>${attempt.lessonName || 'درس'}</td>
-                    <td>${scoreDisplay}</td>
-                    <td style="color:var(--text-muted); font-size:13px;">${dateStr}</td>
-                    <td>${attempt.answers && !isPending ? `<button class="btn-review" onclick="reviewExam('${attempt.id}')"><i class="fas fa-eye"></i> رؤية</button>` : '<span style="color:#999;font-size:12px;">-</span>'}</td>
-                </tr>
-            `;
-        });
-
-        tableHTML += `</tbody></table>`;
-        container.innerHTML = tableHTML;
+function listenAttempts() {
+    if (!currentStudentId) return;
+    attemptsQuery = db.ref('studentAttempts').orderByChild('studentId').equalTo(currentStudentId);
+    attemptsQuery.on('value', (snap) => {
+        const v = snap.val() || {};
+        attemptsCache = Object.keys(v).map(k => ({ id: k, ...v[k] })).sort((a, b) => b.timestamp - a.timestamp);
+        if (lessonsCache) renderLessons();
+        if (document.getElementById('page-results').classList.contains('active')) renderResults();
+        if (document.getElementById('page-profile').classList.contains('active')) loadProfile();
+        refreshNotifications();
     });
+}
+
+function loadStudentResults() { renderResults(); }
+
+function renderResults() {
+    const container = document.getElementById('resultsList');
+    if (!attemptsCache.length) { container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">لا توجد نتائج سابقة</p>'; return; }
+
+    let tableHTML = `
+        <table class="results-table">
+            <thead><tr><th>اسم الامتحان</th><th>الدرجة</th><th>التاريخ</th><th>الإجراء</th></tr></thead>
+            <tbody>`;
+    attemptsCache.forEach(attempt => {
+        const dateStr = new Date(attempt.timestamp).toLocaleDateString('ar-EG');
+        const passed = attempt.percentage >= 50;
+        const isPending = attempt.needsGrading;
+        const scoreDisplay = isPending
+            ? `<span class="badge-score" style="background:#fef3c7; color:#92400e;"><i class="fas fa-hourglass-half"></i> قيد التصحيح</span>`
+            : `<span class="badge-score" style="${passed ? '' : 'background:#fee2e2; color:#b91c1c;'}">${attempt.score} / ${attempt.totalQuestions} (${attempt.percentage}%)</span>`;
+        tableHTML += `
+            <tr>
+                <td>${attempt.lessonName || 'درس'}</td>
+                <td>${scoreDisplay}</td>
+                <td style="color:var(--text-muted); font-size:13px;">${dateStr}</td>
+                <td>${attempt.answers && !isPending
+                    ? `<button class="btn-review" onclick="reviewExam('${attempt.id}')"><i class="fas fa-eye"></i> رؤية</button>
+                       <button class="btn-review" style="margin-top:4px;" onclick="practiceMistakes('${attempt.id}')"><i class="fas fa-dumbbell"></i> أخطائي</button>`
+                    : '<span style="color:#999;font-size:12px;">-</span>'}</td>
+            </tr>`;
+    });
+    container.innerHTML = tableHTML + '</tbody></table>';
+}
+
+// ==================== التدريب على الأخطاء ====================
+let practiceQs = {};
+let practiceStats = { done: 0, right: 0, total: 0 };
+
+function correctOf(q) { return q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer); }
+
+function practiceBanner() {
+    const b = document.getElementById('reviewBanner');
+    b.classList.remove('hidden');
+    b.innerHTML = practiceStats.done < practiceStats.total
+        ? `تدريب على أخطائك — ${practiceStats.done} / ${practiceStats.total}`
+        : `🎉 خلصت التدريب: ${practiceStats.right} صح من ${practiceStats.total}`;
+}
+
+function practiceMistakes(attemptId) {
+    const attempt = attemptsCache.find(a => a.id === attemptId);
+    if (!attempt || !attempt.answers) { alert('لا توجد إجابات محفوظة.'); return; }
+    db.ref('questions').orderByChild('lessonId').equalTo(attempt.lessonId).once('value', (snap) => {
+        const all = snap.val() || {};
+        const wrong = Object.keys(all).map(k => ({ id: k, ...all[k] })).filter(q => {
+            if (parseInt(q.examIndex) !== parseInt(attempt.examIndex) || q.isEssay) return false;
+            const a = attempt.answers[q.id];
+            return a !== undefined && a !== correctOf(q);
+        });
+        if (!wrong.length) { alert('🎉 ما عندكش أخطاء في الأسئلة اللي جاوبت عليها!'); return; }
+
+        navigateTo('exam');
+        document.getElementById('examTitle').innerHTML = `<i class="fas fa-dumbbell"></i> تدريب: ${attempt.lessonName}`;
+        document.getElementById('examMeta').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'none';
+        document.getElementById('saveLaterBtn').style.display = 'none';
+        document.getElementById('resultContainer').classList.add('hidden');
+
+        practiceQs = {};
+        practiceStats = { done: 0, right: 0, total: wrong.length };
+        practiceBanner();
+
+        const letters = ['أ', 'ب', 'ج', 'د'];
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '';
+        wrong.forEach((q, i) => {
+            practiceQs[q.id] = q;
+            let opts = '';
+            if (q.isTrueFalse) {
+                opts = [true, false].map(v => `<div class="option-label" id="pr-${q.id}-${v}" onclick="practiceAnswer('${q.id}', ${v})"><div class="custom-radio"></div><span>${v ? 'صح' : 'خطأ'}</span></div>`).join('');
+            } else {
+                const list = q.options && q.options.length ? q.options : letters;
+                opts = list.map((t, k) => `<div class="option-label" id="pr-${q.id}-${k}" onclick="practiceAnswer('${q.id}', ${k})"><div class="custom-radio"></div><span><strong>${letters[k]}.</strong> ${q.options && q.options.length ? t : ''}</span></div>`).join('');
+            }
+            const content = q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%; border-radius:8px; margin:10px 0;">` : `<div class="review-question-text">${q.questionText || ''}</div>`;
+            const div = document.createElement('div');
+            div.className = 'question-box';
+            div.innerHTML = `<div class="q-number">سؤال ${i + 1} من ${wrong.length}</div>${content}<div>${opts}</div>`;
+            container.appendChild(div);
+        });
+    });
+}
+
+function practiceAnswer(qid, choice) {
+    const q = practiceQs[qid];
+    if (!q || q._done) return;
+    q._done = true;
+    const c = correctOf(q);
+    const ok = document.getElementById(`pr-${qid}-${c}`);
+    if (ok) ok.classList.add('correct');
+    if (choice === c) practiceStats.right++;
+    else { const w = document.getElementById(`pr-${qid}-${choice}`); if (w) w.classList.add('wrong'); }
+    practiceStats.done++;
+    practiceBanner();
 }
 
 // ==================== مراجعة الامتحان ====================
@@ -152,17 +221,9 @@ function loadProfile() {
     document.getElementById('profileGrade').textContent = gradeNames[currentStudent.grade] || '-';
     document.getElementById('profileGender').textContent = currentStudent.gender || '-';
 
-    db.ref('studentAttempts').orderByChild('studentId').equalTo(currentStudentId).once('value', (snapshot) => {
-        const attempts = snapshot.val();
-        if (!attempts) { document.getElementById('profileExams').textContent = '0'; document.getElementById('profileAverage').textContent = '-'; return; }
-        const values = Object.values(attempts);
-        document.getElementById('profileExams').textContent = values.length;
-        const validAttempts = values.filter(a => !a.needsGrading);
-        if (validAttempts.length === 0) {
-            document.getElementById('profileAverage').textContent = '-';
-        } else {
-            const avg = validAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / validAttempts.length;
-            document.getElementById('profileAverage').textContent = Math.round(avg) + '%';
-        }
-    });
+    document.getElementById('profileExams').textContent = attemptsCache.length;
+    const valid = attemptsCache.filter(a => !a.needsGrading);
+    document.getElementById('profileAverage').textContent = valid.length
+        ? Math.round(valid.reduce((sum, a) => sum + (a.percentage || 0), 0) / valid.length) + '%' : '-';
+    renderStats();
 }
