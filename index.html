@@ -149,10 +149,28 @@
     <button class="nav-item" onclick="navigateTo('profile')"><i class="fas fa-user"></i><span>حسابي</span></button>
 </div>
 
+<!-- عارض المحتوى -->
+<div class="viewer-overlay" id="viewerOverlay" onclick="if(event.target===this) closeViewer()">
+    <div class="viewer-box" id="viewerBox">
+        <div class="viewer-header">
+            <div class="viewer-title"><i id="viewerIcon" class="fas fa-file-pdf"></i> <span id="viewerTitle"></span></div>
+            <button class="viewer-close" onclick="closeViewer()" title="إغلاق"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="viewer-body" id="viewerBody"></div>
+        <div class="viewer-spinner" id="viewerSpinner"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
+        <div class="viewer-footer">
+            <button class="viewer-btn primary" id="viewerDownload" onclick="viewerDownload()"><i class="fas fa-download"></i> تحميل</button>
+            <button class="viewer-btn" id="viewerFullscreen" onclick="viewerFullscreen()"><i class="fas fa-expand"></i> ملء الشاشة</button>
+            <button class="viewer-btn" onclick="viewerNewTab()"><i class="fas fa-up-right-from-square"></i> تبويب جديد</button>
+        </div>
+    </div>
+</div>
+
 <!-- الترتيب مهم -->
 <script src="js/firebase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/lessons.js"></script>
+<script src="js/viewer.js"></script>
 <script src="js/exam.js"></script>
 <script src="js/results.js"></script>
 <script src="js/complaints.js"></script>
