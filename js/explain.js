@@ -7,10 +7,14 @@ const explainMem = {};     // كاش في الذاكرة
 
 function registerQuestion(q, studentAnswer) { qRegistry[q.id] = { q, studentAnswer }; }
 
+// أسئلة الصور بس (من غير نص) الشرح غير متاح لها حالياً
+function canExplain(qid) { const r = qRegistry[qid]; return !(r && r.q.imageUrl && !r.q.questionText); }
+
 function explainBtn(qid) {
+    if (!canExplain(qid)) return '';
     return `<button class="btn-explain" onclick="explainQuestion('${qid}', this)"><i class="fas fa-wand-magic-sparkles"></i> شرح السؤال</button>`;
 }
-function explainBox(qid) { return `<div class="explain-box hidden" id="explain-${qid}"></div>`; }
+function explainBox(qid) { if (!canExplain(qid)) return ''; return `<div class="explain-box hidden" id="explain-${qid}"></div>`; }
 
 function escx(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
