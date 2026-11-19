@@ -271,6 +271,7 @@ function renderQuestions() {
         const options = ['أ', 'ب', 'ج', 'د'];
         const div = document.createElement('div');
         div.className = 'question-box';
+        div.dataset.qid = q.id;
 
         if (q.isEssay) {
             div.innerHTML = `
@@ -383,6 +384,8 @@ async function submitExam() {
             if (correctOpt) correctOpt.classList.add('correct');
         }
     });
+
+    addExplainButtons();
 
     const resultContainer = document.getElementById('resultContainer');
     resultContainer.classList.remove('hidden');

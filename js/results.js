@@ -88,6 +88,7 @@ function practiceMistakes(attemptId) {
         container.innerHTML = '';
         wrong.forEach((q, i) => {
             practiceQs[q.id] = q;
+            registerQuestion(q, attempt.answers[q.id]);
             let opts = '';
             if (q.isTrueFalse) {
                 opts = [true, false].map(v => `<div class="option-label" id="pr-${q.id}-${v}" onclick="practiceAnswer('${q.id}', ${v})"><div class="custom-radio"></div><span>${v ? 'صح' : 'خطأ'}</span></div>`).join('');
@@ -98,7 +99,7 @@ function practiceMistakes(attemptId) {
             const content = q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%; border-radius:8px; margin:10px 0;">` : `<div class="review-question-text">${q.questionText || ''}</div>`;
             const div = document.createElement('div');
             div.className = 'question-box';
-            div.innerHTML = `<div class="q-number">سؤال ${i + 1} من ${wrong.length}</div>${content}<div>${opts}</div>`;
+            div.innerHTML = `<div class="q-number">سؤال ${i + 1} من ${wrong.length}</div>${explainBtn(q.id)}${content}<div>${opts}</div>${explainBox(q.id)}`;
             container.appendChild(div);
         });
     });
@@ -183,6 +184,7 @@ function reviewExam(attemptId) {
 
                     const correctAnswer = q.isTrueFalse ? (q.correctAnswer === true || q.correctAnswer === 'true') : parseInt(q.correctAnswer);
                     const isCorrect = studentAnswer === correctAnswer;
+                    registerQuestion(q, studentAnswer);
 
                     let qContent = q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%; border-radius:8px; margin:10px 0;">` : `<div class="review-question-text">${q.questionText || ''}</div>`;
 
@@ -204,7 +206,7 @@ function reviewExam(attemptId) {
                         });
                     }
 
-                    div.innerHTML = `<div class="q-number">سؤال ${index + 1} ${isCorrect ? '<i class="fas fa-check-circle" style="color:var(--accent-green)"></i>' : '<i class="fas fa-times-circle" style="color:var(--danger)"></i>'}</div>${qContent}<div>${optionsHTML}</div>`;
+                    div.innerHTML = `<div class="q-number">سؤال ${index + 1} ${isCorrect ? '<i class="fas fa-check-circle" style="color:var(--accent-green)"></i>' : '<i class="fas fa-times-circle" style="color:var(--danger)"></i>'}</div>${explainBtn(q.id)}${qContent}<div>${optionsHTML}</div>${explainBox(q.id)}`;
                     container.appendChild(div);
                 });
             });
