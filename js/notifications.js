@@ -2,9 +2,16 @@
 function showInfoModal(title, html) {
     document.getElementById('infoTitle').textContent = title;
     document.getElementById('infoBody').innerHTML = html;
-    document.getElementById('infoOverlay').classList.add('open');
+    const ov = document.getElementById('infoOverlay');
+    ov.classList.remove('closing');
+    ov.classList.add('open');
 }
-function closeInfoModal() { document.getElementById('infoOverlay').classList.remove('open'); }
+function closeInfoModal() {
+    const ov = document.getElementById('infoOverlay');
+    if (!ov.classList.contains('open') || ov.classList.contains('closing')) return;
+    ov.classList.add('closing');
+    setTimeout(() => ov.classList.remove('open', 'closing'), 220);
+}
 
 function showToast(msg) {
     const wrap = document.getElementById('toastWrap');

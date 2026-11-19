@@ -3,9 +3,16 @@ let lessonsCache = null;
 let unitsCache = null;
 let currentUnitId = null;   // null = شاشة الوحدات، أو id الوحدة، أو '__none' لـ "دروس أخرى"
 let searchTerm = '';
+let animateNext = true;   // تشغيل أنيميشن الدخول عند التنقل فقط (مش عند تحديث البيانات)
+
+function skeletonHTML() {
+    const card = '<div class="unit-card skeleton-card"><div class="unit-img skeleton"></div><div class="unit-info"><div class="skeleton line"></div><div class="skeleton line short"></div></div></div>';
+    return '<div class="units-grid">' + card.repeat(4) + '</div>';
+}
 
 function loadLessons() {
-    document.getElementById('lessonsList').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">جاري التحميل...</p>';
+    animateNext = true;
+    document.getElementById('lessonsList').innerHTML = skeletonHTML();
     db.ref('lessons').on('value', (s) => { lessonsCache = s.val() || {}; renderLessons(); refreshNotifications(); },
         () => { lessonsCache = {}; renderLessons(); });
     db.ref('units').on('value', (s) => { unitsCache = s.val() || {}; renderLessons(); },
@@ -46,13 +53,24 @@ function lessonMatches(l, term) {
 }
 
 function onSearch(v) { searchTerm = v.trim().toLowerCase(); renderLessons(); }
-function openUnit(id) { currentUnitId = id; renderLessons(); window.scrollTo(0, 0); }
-function backToUnits() { currentUnitId = null; renderLessons(); window.scrollTo(0, 0); }
+function openUnit(id, card) {
+    const container = document.getElementById('lessonsList');
+    if (card) card.classList.add('picked');
+    container.classList.add('leaving');
+    setTimeout(() => { currentUnitId = id; animateNext = true; renderLessons(); window.scrollTo({ top: 0 }); }, 240);
+}
+function backToUnits() {
+    document.getElementById('lessonsList').classList.add('leaving');
+    setTimeout(() => { currentUnitId = null; animateNext = true; renderLessons(); window.scrollTo({ top: 0 }); }, 220);
+}
 
 // ---------- الرسم ----------
 function renderLessons() {
     if (lessonsCache === null || unitsCache === null) return;
     const container = document.getElementById('lessonsList');
+    container.classList.remove('leaving');
+    container.classList.toggle('anim-in', animateNext);
+    animateNext = false;
 
     const openIds = Array.from(container.querySelectorAll('[id^="accordion-"],[id^="sub-"]'))
         .filter(el => el.style.display === 'block').map(el => el.id);
@@ -118,9 +136,9 @@ function renderUnitsGrid(container, units, lessons, orphans) {
             const count = u.id === '__none' ? orphans.length : lessons.filter(l => l.unitId === u.id).length;
             const card = document.createElement('div');
             card.className = 'unit-card';
-            card.onclick = () => openUnit(u.id);
+            card.onclick = () => openUnit(u.id, card);
             card.innerHTML = `
-                <div class="unit-img"><i class="fas fa-book-open"></i>${u.image ? `<img src="${u.image}" alt="" loading="lazy" onerror="this.remove()">` : ''}</div>
+                <div class="unit-img"><i class="fas fa-book-open"></i>${u.image ? `<img src="${u.image}" alt="" loading="lazy" onload="this.classList.add('loaded')" onerror="this.remove()">` : ''}</div>
                 <div class="unit-info"><h4>${u.name}</h4><span>${count} درس</span></div>`;
             grid.appendChild(card);
         });
@@ -214,17 +232,9 @@ function buildLessonBox(lesson) {
 }
 
 function toggleAccordion(id) {
-    const content = document.getElementById('accordion-' + id);
-    const icon = document.getElementById('icon-' + id);
-    const open = content.style.display === 'block';
-    content.style.display = open ? 'none' : 'block';
-    icon.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    slideToggle(document.getElementById('accordion-' + id), document.getElementById('icon-' + id));
 }
 
 function toggleSubAccordion(id) {
-    const content = document.getElementById(id);
-    const icon = document.getElementById('icon-' + id);
-    const open = content.style.display === 'block';
-    content.style.display = open ? 'none' : 'block';
-    icon.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    slideToggle(document.getElementById(id), document.getElementById('icon-' + id));
 }

@@ -256,6 +256,7 @@ function updateTimerDisplay() {
     const secs = timeRemaining % 60;
     document.getElementById('timerDisplay').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     const timerBox = document.getElementById('timerBox');
+    timerBox.classList.toggle('timer-danger', timeRemaining < 60);
     if (timeRemaining < 60) timerBox.style.background = 'var(--danger)';
     else if (timeRemaining < 300) timerBox.style.background = '#f59e0b';
     else timerBox.style.background = 'var(--text-main)';
@@ -325,7 +326,9 @@ function renderQuestions() {
 
 function updateProgress() {
     const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
-    document.getElementById('progressText').textContent = `${answered} / ${currentQuestions.length}`;
+    const pt = document.getElementById('progressText');
+    pt.textContent = `${answered} / ${currentQuestions.length}`;
+    pt.classList.remove('bump'); void pt.offsetWidth; pt.classList.add('bump');
 }
 
 // ==================== اختيار إجابة ====================
@@ -479,8 +482,9 @@ async function submitExam() {
         resultText = `
             <div style="text-align:center; padding: 20px 0;">
                 <h2 style="font-size:24px; color:var(--primary-blue); margin-bottom:15px; font-weight:800;"><i class="fas fa-award"></i> تم التسليم!</h2>
-                <div style="font-size:64px; font-weight:900; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; line-height:1;">${finalScore} <span style="font-size:32px; color:var(--text-muted);">/</span> ${totalScore}</div>
-                <div style="font-size:18px; color:var(--text-muted); margin:10px 0 20px; font-weight:700;">النسبة: ${percentage}%</div>
+                <div style="font-size:64px; font-weight:900; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; line-height:1;"><span class="count-up" data-to="${finalScore}">0</span> <span style="font-size:32px; color:var(--text-muted);">/</span> ${totalScore}</div>
+                <div style="font-size:18px; color:var(--text-muted); margin:10px 0 12px; font-weight:700;">النسبة: ${percentage}%</div>
+                <div class="result-bar"><span style="--w:${percentage}%"></span></div>
                 ${essayQuestions.length > 0 ? `<div style="font-size:14px; color:var(--text-muted); margin-bottom:15px;">(الاختياري: ${objectiveScore} + المقالي: ${essayScore.toFixed(1)})</div>` : ''}
                 <div style="font-weight:800; font-size:20px; color:${passed ? 'var(--accent-green)' : 'var(--danger)'}; background:${passed ? 'var(--accent-green-light)' : '#fee2e2'}; display:inline-block; padding:10px 20px; border-radius:10px;">
                     ${passed ? '<i class="fas fa-check-circle"></i> ممتاز! أنت ناجح' : '<i class="fas fa-exclamation-triangle"></i> تحتاج للمزيد من المراجعة'}
@@ -489,6 +493,8 @@ async function submitExam() {
         `;
     }
     resultContainer.innerHTML = resultText;
+    runCountUps(resultContainer);
+    if (isGradingComplete && passed) launchConfetti();
 
     saveResult(objectiveScore, finalScore, totalObjective, totalScore, percentage, userAnswers, essayFeedbacks, !isGradingComplete, essayQuestions);
 }

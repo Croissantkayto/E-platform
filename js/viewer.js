@@ -88,12 +88,14 @@ function viewerErrorHTML() {
 }
 
 function closeViewer() {
+    const ov = document.getElementById('viewerOverlay');
+    if (!ov.classList.contains('open') || ov.classList.contains('closing')) return;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    const box = document.getElementById('viewerBox');
-    box.classList.remove('maximized');
-    document.getElementById('viewerOverlay').classList.remove('open');
+    document.getElementById('viewerBox').classList.remove('maximized');
     document.getElementById('viewerBody').innerHTML = ''; // يوقف الفيديو
     document.body.style.overflow = '';
+    ov.classList.add('closing');
+    setTimeout(() => ov.classList.remove('open', 'closing'), 220);
 }
 
 function viewerNewTab() { window.open(viewerState.url, '_blank', 'noopener'); }

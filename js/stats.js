@@ -12,7 +12,7 @@ function renderStats() {
     const y = p => T + (H - T - B) * (1 - p / 100);
     const pts = asc.map((a, i) => `${x(i).toFixed(1)},${y(a.percentage || 0).toFixed(1)}`).join(' ');
     const grid = [0, 50, 100].map(p => `<line class="chart-grid" x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}"/><text class="chart-text" x="2" y="${y(p) + 3}">${p}%</text>`).join('');
-    const dots = asc.map((a, i) => `<circle class="chart-dot" cx="${x(i).toFixed(1)}" cy="${y(a.percentage || 0).toFixed(1)}" r="3.5"/>`).join('');
+    const dots = asc.map((a, i) => `<circle class="chart-dot" style="animation-delay:${(0.5 + i * 0.1).toFixed(2)}s" cx="${x(i).toFixed(1)}" cy="${y(a.percentage || 0).toFixed(1)}" r="3.5"/>`).join('');
 
     const best = Math.max(...valid.map(a => a.percentage || 0));
     const last = asc[n - 1].percentage || 0;
@@ -33,7 +33,7 @@ function renderStats() {
                 <div class="chip"><b>${best}%</b><span>أعلى نسبة</span></div>
                 <div class="chip"><b>${last}%</b><span>آخر امتحان</span></div>
             </div>
-            <svg viewBox="0 0 ${W} ${H}" class="chart-svg">${grid}<polyline class="chart-line" points="${pts}"/>${dots}</svg>
+            <svg viewBox="0 0 ${W} ${H}" class="chart-svg">${grid}<polyline class="chart-line" pathLength="1" points="${pts}"/>${dots}</svg>
             ${weak.length ? `<h4 class="stats-sub">📉 محتاج مراجعة</h4>${weak.map(r => li(r, 'background:#fee2e2;color:#b91c1c;')).join('')}` : ''}
             ${strong.length ? `<h4 class="stats-sub">⭐ نقاط قوتك</h4>${strong.map(r => li(r, 'background:var(--accent-green-light);color:#065f46;')).join('')}` : ''}
         </div>`;
