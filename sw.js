@@ -1,6 +1,6 @@
 // Service Worker: الشبكة أولاً ثم الكاش (عشان التحديثات توصل فوراً)
-const CACHE = 'oboor-v1';
-const SHELL = ['./', 'index.html', 'style.css', 'js/firebase-config.js', 'js/auth.js', 'js/lessons.js', 'js/viewer.js', 'js/exam.js',
+const CACHE = 'oboor-v2';
+const SHELL = ['./', 'index.html', 'style.css', 'animations.css', 'js/animations.js', 'js/firebase-config.js', 'js/auth.js', 'js/lessons.js', 'js/viewer.js', 'js/exam.js',
     'js/results.js', 'js/complaints.js', 'js/stats.js', 'js/notifications.js', 'js/leaderboard.js', 'js/app-init.js'];
 
 self.addEventListener('install', (e) => {
