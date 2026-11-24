@@ -250,3 +250,112 @@ body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; p
 [data-theme="dark"] .essay-feedback, [data-theme="dark"] [style*="background:#f8f9fa"] { color: #1e293b; }
 [data-theme="dark"] [style*="background:white"] { background: var(--bg-card) !important; }
 [data-theme="dark"] .toast { background: #f1f5f9; color: #0f172a; }
+
+
+/* ===== رسالة منبثقة (Confirm Modal) ===== */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(3px);
+    z-index: 1400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.confirm-overlay.open { display: flex; animation: fadeIn 0.2s; }
+
+.confirm-box {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border-color);
+    animation: confirmPop 0.25s ease;
+}
+@keyframes confirmPop {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* أيقونة الرسالة */
+.confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 24px auto 0;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+.confirm-icon.warn   { background: var(--warn-light); color: var(--warn); }
+.confirm-icon.danger { background: #fee2e2; color: var(--danger); }
+
+/* نص الرسالة */
+.confirm-title {
+    text-align: center;
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 14px 20px 6px;
+}
+.confirm-text {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin: 0 24px 22px;
+}
+
+/* الأزرار */
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 20px;
+}
+.confirm-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+/* زر حسناً */
+.confirm-btn.ok {
+    background: var(--primary-blue);
+    color: white;
+    border: 2px solid var(--primary-blue);
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+}
+.confirm-btn.ok:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+/* زر تراجع */
+.confirm-btn.cancel {
+    background: var(--bg-body);
+    color: var(--text-main);
+    border: 2px solid var(--border-color);
+}
+.confirm-btn.cancel:hover {
+    border-color: var(--primary-blue);
+    background: var(--primary-light);
+    color: var(--primary-hover);
+}
+
+/* الوضع الليلي */
+[data-theme="dark"] .confirm-icon.danger { background: #450a0a; color: #fca5a5; }
