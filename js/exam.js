@@ -283,10 +283,10 @@ function cheat_detector(){
         icon: 'fa-exclamation-triangle',
         showCancel: false,
         okText: 'حسنا'
+          onOk: () => submitExam(true)
     });
 }
-    submitExam(true);
-}
+
 
 // ---------- الحفظ اليدوي والخروج ----------
 async function saveForLater(silent) {
