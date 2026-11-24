@@ -338,18 +338,24 @@ function assignPerm(q) {
 // ==================== بدء الامتحان ====================
 function startExam(lessonId, examName, examIndex) {
     showConfirm({
-    title: 'تنبيه',
-    text: `سيتم بدأ الامتحان ويجب حل الاسئلة قبل انتهاء الوقت 
-    - يمنع الخروج من المنصة اثناء الامتحان 
-    - بالتوفيق`,
-    type: 'warn',
-    icon: 'fa-exclamation-triangle',
-    showCancel: true,
-    okText: 'دخول الامتحان'
-});
+        title: 'تنبيه',
+        text: `سيتم بدء الامتحان ويجب حل الأسئلة قبل انتهاء الوقت.
+- يمنع الخروج من المنصة أثناء الامتحان.
+- بالتوفيق`,
+        type: 'warn',
+        icon: 'fa-exclamation-triangle',
+        showCancel: true,
+        okText: 'دخول الامتحان',
+        cancelText: 'تراجع',
+        onOk: () => beginExam(lessonId, examName, examIndex)   // ← لا يبدأ إلا بعد الموافقة
+    });
+}
+
+function beginExam(lessonId, examName, examIndex) {
     db.ref('lessons/' + lessonId).once('value', (snapshot) => {
         const lesson = snapshot.val();
         if (!lesson) { alert('⚠️ خطأ في تحميل البيانات'); return; }
+
         const exams = lesson.exams || [];
         const exam = exams[examIndex];
         if (!exam) { alert('⚠️ الامتحان غير موجود'); return; }
@@ -433,7 +439,9 @@ function startExam(lessonId, examName, examIndex) {
             if (restored.length > 0) {
                 currentQuestions = restored;
                 userAnswers = Object.assign({}, draft.answers || {});
-                currentQuestions.forEach(q => { if (draft.perms && draft.perms[q.id]) q._perm = Array.from(draft.perms[q.id]); });
+                currentQuestions.forEach(q => {
+                    if (draft.perms && draft.perms[q.id]) q._perm = Array.from(draft.perms[q.id]);
+                });
             } else {
                 const shuffled = allQuestions.sort(() => 0.5 - Math.random());
                 currentQuestions = questionCount === 'all' ? shuffled : shuffled.slice(0, Math.min(questionCount, shuffled.length));
