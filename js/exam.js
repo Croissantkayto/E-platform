@@ -147,7 +147,8 @@ function showConfirm({
     icon = 'fa-question-circle',
     showCancel = true,       // ← اختياري: إظهار زر الرجوع أم لا
     onOk = null,
-    onCancel = return
+    onCancel = null
+
 } = {}) {
 
     injectConfirmStyles();
