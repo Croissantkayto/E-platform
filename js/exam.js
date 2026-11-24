@@ -276,6 +276,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function cheat_detector(){
+    showConfirm({
+        title: 'تنبيه',
+        text: `لقد خرجت مرات عدة \n سيتم اخراجك من الامتحان وتسليم درجتك \n اذا كان هناك اي مشكلة تحدث الى المشرف`,
+        type: 'warn',
+        icon: 'fa-exclamation-triangle',
+        showCancel: false,
+        okText: 'حسنا'
+    });
+}
     submitExam(true);
 }
 
@@ -340,9 +349,10 @@ function assignPerm(q) {
 function startExam(lessonId, examName, examIndex) {
     showConfirm({
         title: 'تنبيه',
-        text: `سيتم بدء الامتحان ويجب حل الأسئلة قبل انتهاء الوقت.
-- يمنع الخروج من المنصة أثناء الامتحان.
-- بالتوفيق`,
+        text: `
+- \n سيتم بدء الامتحان ويجب حل الأسئلة قبل انتهاء الوقت
+- \n يمنع الخروج من المنصة أثناء الامتحان
+- \n بالتوفيق`,
         type: 'warn',
         icon: 'fa-exclamation-triangle',
         showCancel: true,
@@ -566,7 +576,7 @@ async function submitExam(cheater) {
     if (timerInterval) clearInterval(timerInterval);
 
     const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
-    if (answered < currentQuestions.length & cheater == false) {
+    if (answered < currentQuestions.length && cheater !== true) {
         if (!confirm(`⚠️ لم تجب على ${currentQuestions.length - answered} سؤال/أسئلة.\nهل تريد التسليم؟`)) { startTimer(); return; }
     }
 
