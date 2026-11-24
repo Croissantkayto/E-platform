@@ -278,7 +278,7 @@ document.addEventListener('visibilitychange', () => {
 function cheat_detector(){
     showConfirm({
         title: 'تنبيه',
-        text: `لقد خرجت مرات عدة \n سيتم اخراجك من الامتحان وتسليم درجتك \n اذا كان هناك اي مشكلة تحدث الى المشرف`,
+        text: `لقد خرجت مرات عدة <br> سيتم اخراجك من الامتحان وتسليم درجتك <br> اذا كان هناك اي مشكلة تحدث الى المشرف`,
         type: 'warn',
         icon: 'fa-exclamation-triangle',
         showCancel: false,
@@ -349,10 +349,7 @@ function assignPerm(q) {
 function startExam(lessonId, examName, examIndex) {
     showConfirm({
         title: 'تنبيه',
-        text: `
-- \n سيتم بدء الامتحان ويجب حل الأسئلة قبل انتهاء الوقت
-- \n يمنع الخروج من المنصة أثناء الامتحان
-- \n بالتوفيق`,
+       text: `• سيتم بدء الامتحان ويجب حل الأسئلة قبل انتهاء الوقت<br>• يمنع الخروج من المنصة أثناء الامتحان<br>• بالتوفيق`,
         type: 'warn',
         icon: 'fa-exclamation-triangle',
         showCancel: true,
