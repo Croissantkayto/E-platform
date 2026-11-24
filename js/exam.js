@@ -77,8 +77,12 @@ async function autosaveNow() {
 document.addEventListener('visibilitychange', () => {
     if (!examActive || isSubmitted) return;
     if (document.hidden) { tabLeaves++; leftFlag = true; autosaveNow(); }
-    else if (leftFlag) { leftFlag = false; showToast(`⚠️ تم تسجيل خروجك من صفحة الامتحان (${tabLeaves})`); }
+    else if (leftFlag) { leftFlag = false; showToast(`⚠️ اذا خرجت مرتين سيتم طردك واعتبارك غشاش (${tabLeaves})`); }
 });
+
+function cheat_detector(){
+    
+}
 
 // ---------- الحفظ اليدوي والخروج ----------
 async function saveForLater(silent) {
