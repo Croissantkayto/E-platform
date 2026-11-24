@@ -79,7 +79,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) { tabLeaves++; leftFlag = true; autosaveNow(); }
     else if (leftFlag) {
         leftFlag = false; showToast(`⚠️ اذا خرجت مرتين سيتم طردك واعتبارك غشاش (${tabLeaves})`);
-    if(tabLeaves == 2){
+    if(tabLeaves > 1){
         cheat_detector();
     }
     }
