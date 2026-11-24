@@ -18,6 +18,195 @@ let autosaveTimer = null;
 let tabLeaves = 0;
 let leftFlag = false;
 
+// ----------------------  الرسالة ------------------
+
+/* ===== رسالة منبثقة ديناميكية بالكامل بـ JS ===== */
+
+function injectConfirmStyles() {
+    if (document.getElementById('confirm-modal-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'confirm-modal-styles';
+    style.textContent = `
+        .cf-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(3px);
+            z-index: 1400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .cf-overlay.open { opacity: 1; visibility: visible; }
+
+        .cf-box {
+            background: var(--bg-card, #ffffff);
+            width: 100%;
+            max-width: 420px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color, #e2e8f0);
+            transform: scale(0.92) translateY(10px);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        .cf-overlay.open .cf-box { transform: scale(1) translateY(0); opacity: 1; }
+
+        .cf-icon {
+            width: 64px;
+            height: 64px;
+            margin: 24px auto 0;
+            border-radius: 50%;
+            background: var(--primary-light, #e0f2fe);
+            color: var(--primary-blue, #0284c7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .cf-icon.warn   { background: var(--warn-light, #fef3c7); color: var(--warn, #f59e0b); }
+        .cf-icon.danger { background: #fee2e2; color: var(--danger, #ef4444); }
+
+        .cf-title {
+            text-align: center;
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--text-main, #1e293b);
+            margin: 14px 20px 6px;
+        }
+        .cf-text {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted, #64748b);
+            line-height: 1.7;
+            margin: 0 24px 22px;
+        }
+
+        .cf-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px;
+        }
+        .cf-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .cf-btn.ok {
+            background: var(--primary-blue, #0284c7);
+            color: #fff;
+            border: 2px solid var(--primary-blue, #0284c7);
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+        }
+        .cf-btn.ok:hover {
+            background: var(--primary-hover, #0369a1);
+            border-color: var(--primary-hover, #0369a1);
+            transform: translateY(-2px);
+        }
+        .cf-btn.cancel {
+            background: var(--bg-body, #f8fafc);
+            color: var(--text-main, #1e293b);
+            border: 2px solid var(--border-color, #e2e8f0);
+        }
+        .cf-btn.cancel:hover {
+            border-color: var(--primary-blue, #0284c7);
+            background: var(--primary-light, #e0f2fe);
+            color: var(--primary-hover, #0369a1);
+        }
+
+        /* زر واحد فقط يأخذ العرض الكامل */
+        .cf-actions.single .cf-btn { flex: 1 1 100%; }
+
+        [data-theme="dark"] .cf-icon.danger { background: #450a0a; color: #fca5a5; }
+    `;
+    document.head.appendChild(style);
+}
+
+function showConfirm({
+    title = 'تأكيد العملية',
+    text = 'هل أنت متأكد من تنفيذ هذا الإجراء؟',
+    type = 'primary',
+    okText = 'حسناً',
+    cancelText = 'تراجع',
+    icon = 'fa-question-circle',
+    showCancel = true,       // ← اختياري: إظهار زر الرجوع أم لا
+    onOk = null,
+    onCancel = return
+} = {}) {
+
+    injectConfirmStyles();
+
+    const old = document.querySelector('.cf-overlay');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'cf-overlay';
+
+    // بناء الأزرار حسب showCancel
+    const actionsHTML = showCancel
+        ? `<button class="cf-btn cancel"><i class="fas fa-undo"></i> ${cancelText}</button>
+           <button class="cf-btn ok"><i class="fas fa-check"></i> ${okText}</button>`
+        : `<button class="cf-btn ok"><i class="fas fa-check"></i> ${okText}</button>`;
+
+    overlay.innerHTML = `
+        <div class="cf-box">
+            <div class="cf-icon ${type === 'primary' ? '' : type}">
+                <i class="fas ${icon}"></i>
+            </div>
+            <h3 class="cf-title">${title}</h3>
+            <p class="cf-text">${text}</p>
+            <div class="cf-actions ${showCancel ? '' : 'single'}">
+                ${actionsHTML}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+
+    const okBtn = overlay.querySelector('.cf-btn.ok');
+    const cancelBtn = overlay.querySelector('.cf-btn.cancel');
+
+    const close = (callback) => {
+        overlay.classList.remove('open');
+        setTimeout(() => overlay.remove(), 250);
+        if (typeof callback === 'function') callback();
+    };
+
+    okBtn.onclick = () => close(onOk);
+    if (cancelBtn) cancelBtn.onclick = () => close(onCancel);
+
+    // الضغط خارج الصندوق: يُغلق فقط لو فيه زر تراجع
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay && showCancel) close(onCancel);
+    });
+
+    // Escape: يُغلق فقط لو فيه زر تراجع
+    const escHandler = (e) => {
+        if (e.key === 'Escape' && showCancel) {
+            close(onCancel);
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
 // ==================== المسودات (الاستكمال لاحقاً) ====================
 // المسار: examDrafts/{studentId}/{lessonId}_{examIndex}
 let drafts = {};
@@ -148,6 +337,16 @@ function assignPerm(q) {
 
 // ==================== بدء الامتحان ====================
 function startExam(lessonId, examName, examIndex) {
+    showConfirm({
+    title: 'تنبيه',
+    text: `سيتم بدأ الامتحان ويجب حل الاسئلة قبل انتهاء الوقت 
+    - يمنع الخروج من المنصة اثناء الامتحان 
+    - بالتوفيق`,
+    type: 'warn',
+    icon: 'fa-exclamation-triangle',
+    showCancel: true,
+    okText: 'دخول الامتحان'
+});
     db.ref('lessons/' + lessonId).once('value', (snapshot) => {
         const lesson = snapshot.val();
         if (!lesson) { alert('⚠️ خطأ في تحميل البيانات'); return; }
