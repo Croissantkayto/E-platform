@@ -282,8 +282,8 @@ function cheat_detector(){
         type: 'warn',
         icon: 'fa-exclamation-triangle',
         showCancel: false,
-        okText: 'حسنا'
-          onOk: () => submitExam(true)
+        okText: 'حسنا',
+        onOk: () => submitExam(true)
     });
 }
 
