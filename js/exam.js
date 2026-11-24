@@ -86,7 +86,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function cheat_detector(){
-    submitExam();
+    submitExam(true);
 }
 
 // ---------- الحفظ اليدوي والخروج ----------
@@ -353,12 +353,12 @@ function selectOption(questionId, optionIndex) {
 }
 
 // ==================== تسليم الامتحان ====================
-async function submitExam() {
+async function submitExam(cheater) {
     if (isSubmitted) return;
     if (timerInterval) clearInterval(timerInterval);
 
     const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== '' && userAnswers[k] !== undefined).length;
-    if (answered < currentQuestions.length) {
+    if (answered < currentQuestions.length & cheater == false) {
         if (!confirm(`⚠️ لم تجب على ${currentQuestions.length - answered} سؤال/أسئلة.\nهل تريد التسليم؟`)) { startTimer(); return; }
     }
 
