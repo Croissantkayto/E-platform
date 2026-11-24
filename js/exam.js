@@ -77,11 +77,16 @@ async function autosaveNow() {
 document.addEventListener('visibilitychange', () => {
     if (!examActive || isSubmitted) return;
     if (document.hidden) { tabLeaves++; leftFlag = true; autosaveNow(); }
-    else if (leftFlag) { leftFlag = false; showToast(`⚠️ اذا خرجت مرتين سيتم طردك واعتبارك غشاش (${tabLeaves})`); }
+    else if (leftFlag) {
+        leftFlag = false; showToast(`⚠️ اذا خرجت مرتين سيتم طردك واعتبارك غشاش (${tabLeaves})`);
+    if(tabLeaves == 2){
+        cheat_detector();
+    }
+    }
 });
 
 function cheat_detector(){
-    
+    submitExam();
 }
 
 // ---------- الحفظ اليدوي والخروج ----------
